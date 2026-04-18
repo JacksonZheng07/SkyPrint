@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SkyPrint
+
+**Clean aviation intelligence. Carbon transparency at every altitude.**
+
+SkyPrint is a climate-tech platform that reveals the hidden climate impact of aviation — especially contrails, which account for ~35% of aviation's warming effect but remain invisible to travelers.
+
+## Core Systems
+
+### 1. Contrail Engine (Python/PyContrails)
+Scientific contrail modeling using the CoCiP (Contrail Cirrus Prediction) model. Predicts contrail formation probability, radiative forcing, and optimal altitudes along flight trajectories using NOAA GFS weather data.
+
+### 2. Decision Intelligence (Next.js)
+Flight comparison and airline scoring that ranks options by total climate impact (CO2 + contrail radiative forcing). Integrates Aviationstack for flight data and OpenSky for real-time trajectories.
+
+### 3. Human Interface Layer
+- **Aero** — Context-aware AI avatar powered by Gemini. Explains contrail science, flight impact, and nudges users toward cleaner choices. Not a chatbot — a proactive system guide with voice (ElevenLabs).
+- **Photon** — Lifecycle notification system via spectrum-ts. Delivers timed behavioral nudges: post-flight impact summaries, pre-flight contrail warnings, long-term stats.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16 (App Router), Tailwind CSS, shadcn/ui, Framer Motion |
+| AI | AI SDK v6, Gemini (via AI Gateway), K2 Think, ElevenLabs |
+| Backend | Next.js API Routes, Supabase Postgres, Drizzle ORM |
+| Contrail Engine | Python, FastAPI, PyContrails (CoCiP), NOAA GFS |
+| Notifications | spectrum-ts (Photon) |
+| Deploy | Vercel (frontend), DigitalOcean (contrail engine) |
+
+## Architecture
+
+```
+User → Flight Search → Aviationstack API
+     → Trajectory    → OpenSky Network
+     → Weather       → NOAA GFS (open-meteo.com)
+     → Contrails     → PyContrails CoCiP Engine
+     → Impact Score  → CO2 + Radiative Forcing
+     → Aero          → Gemini explanation + ElevenLabs voice
+     → Photon        → Post-flight notification via spectrum-ts
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 20+
+- Python 3.11+
+- Docker (for contrail engine)
+- Supabase account
+- API keys (see `.env.local.example`)
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.local.example .env.local
+# Fill in your API keys in .env.local
+
+# Run database migrations
+npx drizzle-kit push
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Contrail Engine (Python)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd services/contrail_engine
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Or with Docker:
 
-## Learn More
+```bash
+docker-compose up contrail-engine
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Pages
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/compare` | Flight comparison (main feature) |
+| `/simulate` | Route simulation — baseline vs optimized |
+| `/airline/[id]` | Airline environmental scorecard |
+| `/mission` | About the mission |
+| `/daily` | Daily impact statistics |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Routes
 
-## Deploy on Vercel
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/compare-flights` | POST | Full flight comparison pipeline |
+| `/api/simulate-route` | POST | Baseline vs optimized trajectory |
+| `/api/score-airline` | POST | K2 Think airline scoring |
+| `/api/aero/chat` | POST | Gemini streaming chat (Aero) |
+| `/api/aero/voice` | POST | ElevenLabs TTS proxy |
+| `/api/photon/trigger` | POST | Trigger lifecycle notification |
+| `/api/photon/cron` | GET | Cron handler for scheduled events |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `.env.local.example` for all required variables.
+
+## License
+
+MIT

@@ -22,7 +22,27 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.log
+*.swp
+*.swo
+*~
+
+# editors / IDEs
+.vscode/
+!.vscode/extensions.json
+.idea/
+.cursor/
+.zed/
+*.sublime-project
+*.sublime-workspace
+
+# screenshots / local scratch
+/screenshots/
+/tmp/
+/.tmp/
+/scratch/
 
 # debug
 npm-debug.log*
@@ -32,10 +52,44 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+!.env.example
 
 # vercel
 .vercel
 
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+.venv/
+venv/
+
+# weather data cache
+/services/contrail_engine/weather_cache/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude / ai tooling
+.claude/
+.aider*
+.cursorignore
+
+# turbo / build caches
+.turbo/
+.cache/
+
+# test output
+/playwright-report/
+/test-results/
+/.nyc_output/
+
+# local db / data dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump

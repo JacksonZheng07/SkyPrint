@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/photon/cron",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

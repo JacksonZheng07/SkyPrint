@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.104",
     "@ai-sdk/google": "^3.0.64",
+    "@ai-sdk/react": "^3.0.170",
     "@base-ui/react": "^1.4.0",
     "@elevenlabs/elevenlabs-js": "^2.43.0",
     "@supabase/ssr": "^0.10.2",
