@@ -4,7 +4,9 @@ import { useEffect, useState, use } from "react";
 import { Scorecard } from "@/components/airline/scorecard";
 import { FleetChart } from "@/components/airline/fleet-chart";
 import { TrendGraph } from "@/components/airline/trend-graph";
+import { ImpactVisualizer } from "@/components/airline/impact-visualizer";
 import type { AirlineScore } from "@/lib/types/airline";
+import Link from "next/link";
 
 export default function AirlinePage({
   params,
@@ -64,8 +66,20 @@ export default function AirlinePage({
   if (!score) return null;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
+    <div className="mx-auto max-w-5xl space-y-6 p-8">
+      {/* Back to rankings */}
+      <Link
+        href="/airlines"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        ← All Airlines
+      </Link>
+
       <Scorecard score={score} />
+
+      {/* Impact Visualization */}
+      <ImpactVisualizer score={score} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <FleetChart fleet={score.fleetProfile} />
         <TrendGraph airlineName={score.airlineName} />

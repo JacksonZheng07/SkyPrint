@@ -1,4 +1,5 @@
 import type { AirlineScore, FleetProfile } from "@/lib/types/airline";
+import { generateAirlineNarrative } from "@/lib/clients/k2-think";
 
 // Realistic fleet and efficiency data for major airlines
 const AIRLINE_DATA: Record<
@@ -127,12 +128,32 @@ export async function scoreAirline(airlineCode: string): Promise<AirlineScore> {
 
   const overallGrade = scoreToGrade(overallScore);
 
-  const narrative = generateNarrative(data.name, overallGrade, {
-    fleetEfficiency: Math.round(fleetEfficiency),
-    routeOptimization: Math.round(routeOptimization),
-    contrailMitigation: Math.round(contrailMitigation),
-    sustainableFuel: Math.round(sustainableFuel),
-  }, data);
+  // Try K2 Think V2 for narrative, fall back to local generation
+  let narrative: string;
+  try {
+    narrative = await generateAirlineNarrative({
+      airlineName: data.name,
+      airlineCode: airlineCode.toUpperCase(),
+      overallGrade,
+      overallScore,
+      categories: {
+        fleetEfficiency: Math.round(fleetEfficiency),
+        routeOptimization: Math.round(routeOptimization),
+        contrailMitigation: Math.round(contrailMitigation),
+        sustainableFuel: Math.round(sustainableFuel),
+      },
+      fleetAge: data.fleet.averageAge,
+      contrailProgramActive: data.contrailProgramActive,
+      safPercent: data.safPercent,
+    });
+  } catch {
+    narrative = generateLocalNarrative(data.name, overallGrade, {
+      fleetEfficiency: Math.round(fleetEfficiency),
+      routeOptimization: Math.round(routeOptimization),
+      contrailMitigation: Math.round(contrailMitigation),
+      sustainableFuel: Math.round(sustainableFuel),
+    }, data);
+  }
 
   return {
     airlineCode: airlineCode.toUpperCase(),
@@ -158,7 +179,7 @@ function scoreToGrade(score: number): "A" | "B" | "C" | "D" | "F" {
   return "F";
 }
 
-function generateNarrative(
+function generateLocalNarrative(
   name: string,
   grade: string,
   categories: AirlineScore["categories"],
@@ -197,4 +218,16 @@ function generateNarrative(
   }
 
   return parts.join(" ");
+}
+
+/** Get all supported airline codes */
+export function getSupportedAirlines(): string[] {
+  return Object.keys(AIRLINE_DATA);
+}
+
+/** Score all airlines and return sorted by score (descending) */
+export async function getAllAirlineScores(): Promise<AirlineScore[]> {
+  const codes = getSupportedAirlines();
+  const scores = await Promise.all(codes.map((code) => scoreAirline(code)));
+  return scores.sort((a, b) => b.overallScore - a.overallScore);
 }

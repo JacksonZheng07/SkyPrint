@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
-const elevenlabs = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY,
-});
+let _elevenlabs: ElevenLabsClient | null = null;
+function getElevenLabsClient() {
+  if (!_elevenlabs) {
+    _elevenlabs = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
+    });
+  }
+  return _elevenlabs;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const voiceId = process.env.ELEVENLABS_VOICE_ID ?? "21m00Tcm4TlvDq8ikWAM"; // Default: Rachel
 
-    const audioStream = await elevenlabs.textToSpeech.stream(voiceId, {
+    const audioStream = await getElevenLabsClient().textToSpeech.stream(voiceId, {
       text,
       modelId: "eleven_multilingual_v2",
       outputFormat: "mp3_44100_128",

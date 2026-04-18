@@ -1,21 +1,32 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { FlightSearch } from "@/components/compare/flight-search";
 import { ComparisonGrid } from "@/components/compare/comparison-grid";
+import { BookingConfirmation } from "@/components/compare/booking-confirmation";
 import { AeroTrigger } from "@/components/aero/aero-trigger";
 import { useComparison } from "@/hooks/use-comparison";
 import { useAero } from "@/hooks/use-aero";
-import type { FlightComparisonItem } from "@/lib/types/comparison";
+import { usePhoton } from "@/hooks/use-photon";
+import type { FlightComparisonItem, ImpactSummary } from "@/lib/types/comparison";
 import { formatCo2 } from "@/lib/utils/format";
+import { calculateImpactSummary } from "@/lib/pipeline/impact";
 
 export default function ComparePage() {
   const { comparison, isLoading, error, compare } = useComparison();
   const { trigger } = useAero();
+  const { scheduleBooking } = usePhoton();
+
+  const [selectedFlight, setSelectedFlight] = useState<FlightComparisonItem | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
+  const [isBooked, setIsBooked] = useState(false);
+  const [impactSummary, setImpactSummary] = useState<ImpactSummary | null>(null);
 
   const handleSelectFlight = useCallback(
     (item: FlightComparisonItem) => {
-      // Trigger Aero to summarize the selected flight's impact
+      setSelectedFlight(item);
+      setIsBooked(false);
+      // Trigger Aero to explain the flight
       trigger(
         "flight_selected",
         JSON.stringify({
@@ -27,6 +38,52 @@ export default function ComparePage() {
       );
     },
     [trigger]
+  );
+
+  const handleConfirmBooking = useCallback(
+    async (phoneNumber: string) => {
+      if (!selectedFlight || !comparison) return;
+      setIsBooking(true);
+
+      try {
+        // Calculate impact summary (savings vs worst option)
+        const worstFlight = comparison.flights[comparison.flights.length - 1];
+        const summary = calculateImpactSummary(
+          selectedFlight.contrail.co2Kg,
+          worstFlight.contrail.co2Kg
+        );
+        setImpactSummary(summary);
+
+        // Schedule Photon lifecycle events (booking → pre-flight → post-flight)
+        await scheduleBooking({
+          userId: "demo-user",
+          departureTime: selectedFlight.flight.departureTime,
+          arrivalTime: selectedFlight.flight.arrivalTime,
+          payload: {
+            phoneNumber,
+            impactSummary: summary,
+            contrailData: selectedFlight.metrics,
+          },
+        });
+
+        setIsBooked(true);
+
+        // Trigger Aero to summarize booking
+        trigger(
+          "booking_complete",
+          JSON.stringify({
+            flight: `${selectedFlight.flight.airlineCode} ${selectedFlight.flight.flightNumber}`,
+            co2Saved: formatCo2(summary.co2Saved),
+            contrailRisk: selectedFlight.metrics.riskRating,
+          })
+        );
+      } catch (err) {
+        console.error("Booking error:", err);
+      } finally {
+        setIsBooking(false);
+      }
+    },
+    [selectedFlight, comparison, scheduleBooking, trigger]
   );
 
   return (
@@ -65,6 +122,22 @@ export default function ComparePage() {
         <ComparisonGrid
           comparison={comparison}
           onSelectFlight={handleSelectFlight}
+        />
+      )}
+
+      {/* Booking confirmation modal */}
+      {selectedFlight && (
+        <BookingConfirmation
+          item={selectedFlight}
+          impactSummary={impactSummary}
+          onConfirm={handleConfirmBooking}
+          onCancel={() => {
+            setSelectedFlight(null);
+            setIsBooked(false);
+            setImpactSummary(null);
+          }}
+          isBooking={isBooking}
+          isBooked={isBooked}
         />
       )}
     </div>

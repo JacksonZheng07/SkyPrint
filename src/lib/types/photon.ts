@@ -13,6 +13,7 @@ export interface PhotonEventPayload {
   contrailData?: ContrailMetrics;
   impactSummary?: ImpactSummary;
   userStats?: UserLifetimeStats;
+  phoneNumber?: string; // For iMessage delivery via spectrum-ts
 }
 
 export interface PhotonEvent {

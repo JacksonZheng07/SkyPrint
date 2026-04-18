@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/compare", label: "Compare" },
   { href: "/simulate", label: "Simulate" },
-  { href: "/airline/UA", label: "Airlines", matchPrefix: "/airline" },
+  { href: "/airlines", label: "Airlines", matchPrefix: "/airline" },
   { href: "/daily", label: "Daily" },
   { href: "/mission", label: "Mission" },
 ];
