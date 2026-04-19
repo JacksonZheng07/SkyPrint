@@ -17,6 +17,7 @@ export interface FlightOption {
   aircraftType: string;
   duration: number; // minutes
   stops: number;
+  price?: number; // USD per passenger, if available
   waypoints?: Waypoint[];
 }
 
@@ -24,6 +25,7 @@ export interface FlightSearchParams {
   origin: string;
   destination: string;
   date: string; // YYYY-MM-DD
+  passengers?: number;
 }
 
 export type AircraftType =

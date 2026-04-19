@@ -1,4 +1,5 @@
-import { searchFlights } from "@/lib/clients/aviationstack";
+import { searchFlights as searchSerpApi } from "@/lib/clients/serpapi";
+import { searchFlights as searchAviationstack } from "@/lib/clients/aviationstack";
 import { predictContrails } from "@/lib/clients/contrail-engine";
 import { getDemoFlights, getDemoContrailPrediction } from "@/lib/demo/flights";
 import type {
@@ -12,17 +13,23 @@ import {
   calculateContrailMetrics,
   calculateTotalImpactScore,
 } from "./impact";
+import { generateImpactCopy, inferConfidence } from "./copy";
 
 export async function compareFlights(
   params: FlightSearchParams
 ): Promise<FlightComparison> {
-  // Step 1: Search flights — try real API, fall back to demo data
+  // Step 1: Search flights — try SerpApi first, fall back to AviationStack, then demo
   let flights: FlightOption[];
   try {
-    flights = await searchFlights(params);
-    if (flights.length === 0) throw new Error("No results");
+    flights = await searchSerpApi(params);
+    if (flights.length === 0) throw new Error("No SerpApi results");
   } catch {
-    flights = getDemoFlights(params.origin, params.destination, params.date);
+    try {
+      flights = await searchAviationstack(params);
+      if (flights.length === 0) throw new Error("No AviationStack results");
+    } catch {
+      flights = getDemoFlights(params.origin, params.destination, params.date);
+    }
   }
 
   // Step 2: Generate trajectories for each flight
@@ -57,6 +64,9 @@ export async function compareFlights(
         metrics,
         totalImpactScore: 0,
         rank: index + 1,
+        warmingRatio: 1.0,
+        impactCopy: "",
+        confidenceLevel: "medium" as const,
       };
     })
   );
@@ -80,14 +90,37 @@ export async function compareFlights(
     item.rank = i + 1;
   });
 
+  // Step 6: Compute warming ratios, confidence, and impact copy
+  const bestItem = comparisonItems[0];
+  const worstItem = comparisonItems[comparisonItems.length - 1];
+
+  for (const item of comparisonItems) {
+    item.warmingRatio =
+      bestItem.totalImpactScore > 0
+        ? item.totalImpactScore / bestItem.totalImpactScore
+        : 1.0;
+    item.confidenceLevel = inferConfidence(item);
+    item.impactCopy = generateImpactCopy(item, bestItem, worstItem, item.confidenceLevel);
+  }
+
+  const warmingSpreadPct =
+    worstItem.totalImpactScore > 0
+      ? Math.round(
+          ((worstItem.totalImpactScore - bestItem.totalImpactScore) /
+            worstItem.totalImpactScore) *
+            100
+        )
+      : 0;
+
   return {
     origin: params.origin,
     destination: params.destination,
     date: params.date,
     flights: comparisonItems,
-    bestOption: comparisonItems[0],
-    worstOption: comparisonItems[comparisonItems.length - 1],
+    bestOption: bestItem,
+    worstOption: worstItem,
     averageCo2Kg: Math.round(averageCo2),
+    warmingSpreadPct,
   };
 }
 

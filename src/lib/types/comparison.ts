@@ -14,6 +14,9 @@ export interface FlightComparisonItem {
   metrics: ContrailMetrics;
   totalImpactScore: number; // lower is better
   rank: number;
+  warmingRatio: number; // ratio vs best option (1.0 for best, >1 for others)
+  impactCopy: string; // dynamic comparison copy
+  confidenceLevel: "high" | "medium" | "low";
 }
 
 export interface FlightComparison {
@@ -24,6 +27,7 @@ export interface FlightComparison {
   bestOption: FlightComparisonItem;
   worstOption: FlightComparisonItem;
   averageCo2Kg: number;
+  warmingSpreadPct: number; // (worst - best) / worst * 100
 }
 
 export interface SimulationResult {

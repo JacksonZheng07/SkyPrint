@@ -13,6 +13,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const today = new Date().toISOString().split("T")[0];
+    if (body.date < today) {
+      return NextResponse.json(
+        { error: "Search date must be today or in the future." },
+        { status: 400 }
+      );
+    }
+
     const comparison = await compareFlights(body);
     return NextResponse.json(comparison);
   } catch (error) {

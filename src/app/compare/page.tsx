@@ -6,7 +6,7 @@ import { FlightFilters, type SortKey } from "@/components/compare/flight-filters
 import { ComparisonGrid } from "@/components/compare/comparison-grid";
 import { BookingConfirmation } from "@/components/compare/booking-confirmation";
 import { AeroTrigger } from "@/components/aero/aero-trigger";
-import { FlightPicker, type FlightSelection } from "@/components/shared/flight-picker";
+import { QuickRoutes } from "@/components/compare/quick-routes";
 import { useComparison } from "@/hooks/use-comparison";
 import { useAero } from "@/hooks/use-aero";
 import { usePhoton } from "@/hooks/use-photon";
@@ -39,6 +39,19 @@ export default function ComparePage() {
       case "shortest":
         sorted.sort((a, b) => a.flight.duration - b.flight.duration);
         break;
+      case "tradeoff": {
+        // Balance warming ratio and price: 60% warming, 40% price (normalized)
+        const prices = sorted.map((f) => f.flight.price).filter((p): p is number => typeof p === "number");
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        sorted.sort((a, b) => {
+          const priceA = typeof a.flight.price === "number" && minPrice > 0 ? a.flight.price / minPrice : 1;
+          const priceB = typeof b.flight.price === "number" && minPrice > 0 ? b.flight.price / minPrice : 1;
+          const scoreA = a.warmingRatio * 0.6 + priceA * 0.4;
+          const scoreB = b.warmingRatio * 0.6 + priceB * 0.4;
+          return scoreA - scoreB;
+        });
+        break;
+      }
       default: // "best" — keep original rank order
         sorted.sort((a, b) => a.rank - b.rank);
         break;
@@ -121,13 +134,7 @@ export default function ComparePage() {
       <FlightSearch onSearch={compare} isLoading={isLoading} />
 
       {!comparison && !isLoading && (
-        <FlightPicker
-          onSelect={(flight: FlightSelection) =>
-            compare({ origin: flight.origin, destination: flight.destination, date: flight.date })
-          }
-          isLoading={isLoading}
-          label="Or pick a recent transatlantic flight to compare"
-        />
+        <QuickRoutes onSearch={compare} isLoading={isLoading} />
       )}
 
       {error && (

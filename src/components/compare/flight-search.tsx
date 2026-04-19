@@ -11,19 +11,26 @@ interface FlightSearchProps {
   isLoading: boolean;
 }
 
+function todayISO(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(todayISO());
   const [passengers, setPassengers] = useState(1);
+  const today = todayISO();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const chosenDate = date < today ? today : date;
     if (origin && destination) {
       onSearch({
         origin: origin.toUpperCase(),
         destination: destination.toUpperCase(),
-        date: date || new Date().toISOString().split("T")[0],
+        date: chosenDate,
+        passengers,
       });
     }
   }
@@ -60,6 +67,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
               id="date"
               type="date"
               value={date}
+              min={today}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>

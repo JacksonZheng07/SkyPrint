@@ -1,6 +1,6 @@
 "use client";
 
-export type SortKey = "best" | "contrail" | "co2" | "shortest";
+export type SortKey = "best" | "contrail" | "co2" | "shortest" | "tradeoff";
 
 interface FlightFiltersProps {
   value: SortKey;
@@ -9,6 +9,7 @@ interface FlightFiltersProps {
 
 const FILTERS: { key: SortKey; label: string }[] = [
   { key: "best", label: "Best Match" },
+  { key: "tradeoff", label: "Best Tradeoff" },
   { key: "contrail", label: "Lowest Contrail" },
   { key: "co2", label: "Lowest CO₂" },
   { key: "shortest", label: "Shortest" },
@@ -30,9 +31,6 @@ export function FlightFilters({ value, onChange }: FlightFiltersProps) {
           {f.label}
         </button>
       ))}
-      <button className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-        Filters
-      </button>
     </div>
   );
 }
