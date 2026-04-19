@@ -306,6 +306,99 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* ===== FEATURED STORY ===== */}
+      <section className="bg-zinc-950 px-4 py-20">
+        <motion.div
+          className="mx-auto max-w-5xl"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+        >
+          <motion.p variants={fadeUp} className="text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-2">
+            Flight Story
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-10">
+            See the science behind one real flight
+          </motion.h2>
+
+          <motion.div variants={fadeUp}>
+            <Link
+              href="/story/BAW117_2026-04-10"
+              className="group block rounded-2xl border border-white/10 bg-white/5 overflow-hidden hover:border-emerald-500/40 hover:bg-white/8 transition-all"
+            >
+              <div className="grid md:grid-cols-2 gap-0">
+                {/* Left: flight details */}
+                <div className="p-8 space-y-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-2xl font-bold text-white">BA 117</span>
+                      <span className="rounded-full bg-emerald-600/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
+                        Real CoCiP model
+                      </span>
+                    </div>
+                    <p className="text-white/50 text-sm">British Airways · Boeing 777-300ER</p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-white">
+                    <div>
+                      <p className="text-2xl font-bold">JFK</p>
+                      <p className="text-xs text-white/40">New York</p>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center">
+                      <p className="text-xs text-white/30">6h 50m</p>
+                      <div className="w-full h-px bg-white/10 my-1" />
+                      <p className="text-xs text-white/30">Apr 10, 2026</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">LHR</p>
+                      <p className="text-xs text-white/40">London</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg bg-white/5 px-3 py-2.5">
+                      <p className="text-xs text-white/40">Direct CO₂</p>
+                      <p className="text-lg font-bold text-white">189 kg</p>
+                    </div>
+                    <div className="rounded-lg bg-orange-500/10 px-3 py-2.5 border border-orange-500/20">
+                      <p className="text-xs text-orange-400/80">Contrail</p>
+                      <p className="text-lg font-bold text-orange-300">213 tCO₂e</p>
+                    </div>
+                    <div className="rounded-lg bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+                      <p className="text-xs text-red-400/80">Total warming</p>
+                      <p className="text-lg font-bold text-red-300">435 tCO₂e</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-white/50 leading-relaxed">
+                    A small altitude diversion could have cut warming by{" "}
+                    <span className="text-emerald-400 font-semibold">43%</span>{" "}
+                    at a fuel cost of just 3%.
+                  </p>
+                </div>
+
+                {/* Right: CTA */}
+                <div className="flex flex-col items-center justify-center gap-4 p-8 border-t md:border-t-0 md:border-l border-white/10 text-center">
+                  <div className="h-16 w-16 rounded-full bg-emerald-600/15 border border-emerald-500/20 flex items-center justify-center">
+                    <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">See the full flight story</p>
+                    <p className="text-white/40 text-sm mt-1">Interactive globe · Contrail map · Scrolling analysis</p>
+                  </div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white group-hover:bg-emerald-500 transition-colors">
+                    Explore BA 117 <span aria-hidden="true">→</span>
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
       {/* ===== STATS BAR — over FooterImage.png ===== */}
       <section
         className="relative min-h-screen overflow-hidden bg-cover bg-fixed bg-center bg-no-repeat"

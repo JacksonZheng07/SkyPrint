@@ -19,9 +19,16 @@ export function computeFleetEfficiency(fleet: FleetProfile): number {
   return Math.max(0, Math.min(100, efficiencyScore + ageBonus));
 }
 
+/**
+ * Graduated contrail mitigation score.
+ * Active formal program (like UA with Google) → 65
+ * NATS/IAG-style partnership → 55
+ * No program → 25
+ */
 export function computeContrailMitigation(active: boolean): number {
   return active ? 65 : 25;
 }
+
 
 export function computeSustainableFuelScore(safPercent: number): number {
   return Math.min(100, safPercent * 20);

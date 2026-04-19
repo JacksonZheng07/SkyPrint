@@ -21,6 +21,13 @@ export function Header() {
     <header className={cn(
       "fixed inset-x-0 top-0 z-50 bg-black/20 backdrop-blur-sm"
     )}>
+      <style>{`
+        @keyframes aurora-pulse {
+          0%, 100% { box-shadow: 0 0 8px rgba(45,212,191,0.5), 0 0 20px rgba(45,212,191,0.25), 0 0 40px rgba(45,212,191,0.1); }
+          50%       { box-shadow: 0 0 12px rgba(45,212,191,0.7), 0 0 30px rgba(45,212,191,0.35), 0 0 60px rgba(45,212,191,0.15); }
+        }
+        .playground-active { animation: aurora-pulse 2.5s ease-in-out infinite; }
+      `}</style>
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="h-10 w-10 overflow-hidden rounded-md">
@@ -41,7 +48,9 @@ export function Header() {
                 href={item.href}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  isActive
+                  isActive && item.href === "/playground"
+                    ? "playground-active text-teal-300 border border-teal-400/40 bg-teal-500/10"
+                    : isActive
                     ? "bg-white/15 text-white"
                     : "text-white/80 hover:text-white"
                 )}
