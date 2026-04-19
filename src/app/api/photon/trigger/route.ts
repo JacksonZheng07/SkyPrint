@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           origin: "JFK",
           destination: "MAD",
           impactReductionPct: 37,
-          compareUrl: "/compare",
+          compareUrl: "https://skyprint.photo/compare",
         };
       }
 

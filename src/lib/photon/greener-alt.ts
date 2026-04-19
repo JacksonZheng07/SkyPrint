@@ -44,6 +44,6 @@ export function buildGreenerAlternative(
     origin: comparison.origin,
     destination: comparison.destination,
     impactReductionPct: reductionPct,
-    compareUrl: `/compare/detail?origin=${comparison.origin}&destination=${comparison.destination}&date=${comparison.date}`,
+    compareUrl: `https://skyprint.photo/compare/detail?origin=${comparison.origin}&destination=${comparison.destination}&date=${comparison.date}`,
   };
 }
