@@ -148,6 +148,15 @@ function CompareDetailContent() {
           </div>
         </motion.div>
 
+        {/* Carbon cost analysis */}
+        {flightA.flight.price && flightB.flight.price && co2Delta > 0 && (
+          <motion.div variants={fadeUp} className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+            <h2 className="mb-2 text-center text-lg font-semibold text-white">Carbon Cost Analysis</h2>
+            <p className="mb-5 text-center text-xs text-white/40">How much does it cost per kg of CO₂ saved by choosing the greener flight?</p>
+            <CarbonCostBreakdown flightA={flightA} flightB={flightB} />
+          </motion.div>
+        )}
+
         {/* Airline eco reputation */}
         <motion.div variants={fadeUp} className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h2 className="mb-5 text-lg font-semibold text-white">Airline Environmental Reputation</h2>
@@ -207,6 +216,30 @@ function CompareDetailContent() {
             />
           </div>
         </motion.div>
+
+        {/* K2 Climate Intelligence */}
+        {(flightA.impactCopy || flightB.impactCopy) && (
+          <motion.div variants={fadeUp} className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 backdrop-blur-xl">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded bg-emerald-600 text-[10px] font-bold text-white">K2</span>
+              Climate Intelligence
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {flightA.impactCopy && (
+                <div className="rounded-lg border border-white/5 bg-white/5 p-4">
+                  <p className="mb-2 text-xs font-medium text-white/60">{flightA.flight.airline}</p>
+                  <p className="text-sm leading-relaxed text-white/70">{flightA.impactCopy}</p>
+                </div>
+              )}
+              {flightB.impactCopy && (
+                <div className="rounded-lg border border-white/5 bg-white/5 p-4">
+                  <p className="mb-2 text-xs font-medium text-white/60">{flightB.flight.airline}</p>
+                  <p className="text-sm leading-relaxed text-white/70">{flightB.impactCopy}</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Aero summary */}
         <motion.div variants={fadeUp} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-6 backdrop-blur-xl">
@@ -521,6 +554,43 @@ const AIRLINE_ECO_DATA: Record<string, AirlineEcoData> = {
 };
 
 const DEFAULT_ECO: AirlineEcoData = { grade: "C", gradeColor: "text-amber-400 bg-amber-500/15 border-amber-500/30", tier: "Unranked", contrailProgram: false, safAdoption: 0.5, fleetEfficiency: "Unknown", emissionsTrend: "flat", commitments: "No public data available" };
+
+function CarbonCostBreakdown({ flightA, flightB }: { flightA: FlightComparisonItem; flightB: FlightComparisonItem }) {
+  const co2A = flightA.contrail.co2Kg;
+  const co2B = flightB.contrail.co2Kg;
+  const priceA = flightA.flight.price ?? 0;
+  const priceB = flightB.flight.price ?? 0;
+  const co2Delta = Math.abs(co2A - co2B);
+  const priceDelta = Math.abs(priceA - priceB);
+  const costPerKg = co2Delta > 0 ? priceDelta / co2Delta : 0;
+  const carbonMarketRef = 0.05; // ~$50/tonne = $0.05/kg (EU ETS)
+  const isGoodDeal = costPerKg <= carbonMarketRef * 3; // within 3x of market
+
+  const cheaperAndGreener =
+    (co2A <= co2B && priceA <= priceB) || (co2B <= co2A && priceB <= priceA);
+
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div className="rounded-lg border border-white/5 bg-white/5 p-4 text-center">
+        <p className="text-xs text-white/40">Price difference</p>
+        <p className="mt-1 text-2xl font-bold text-white">${priceDelta.toFixed(0)}</p>
+      </div>
+      <div className="rounded-lg border border-white/5 bg-white/5 p-4 text-center">
+        <p className="text-xs text-white/40">CO₂ difference</p>
+        <p className="mt-1 text-2xl font-bold text-emerald-400">{Math.round(co2Delta)} kg</p>
+      </div>
+      <div className="rounded-lg border border-white/5 bg-white/5 p-4 text-center">
+        <p className="text-xs text-white/40">Cost per kg CO₂ saved</p>
+        <p className={`mt-1 text-2xl font-bold ${cheaperAndGreener ? "text-emerald-400" : isGoodDeal ? "text-amber-400" : "text-red-400"}`}>
+          {cheaperAndGreener ? "Free!" : `$${costPerKg.toFixed(2)}`}
+        </p>
+        <p className="mt-1 text-[10px] text-white/30">
+          EU carbon market: ~${carbonMarketRef.toFixed(2)}/kg
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function AirlineReputationCard({ code, name }: { code: string; name: string }) {
   const eco = AIRLINE_ECO_DATA[code] ?? DEFAULT_ECO;

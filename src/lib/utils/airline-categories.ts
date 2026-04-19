@@ -1,41 +1,54 @@
 export type CategoryKey =
-  | "fleetEfficiency"
-  | "routeOptimization"
   | "contrailMitigation"
-  | "sustainableFuel";
+  | "fleetEfficiency"
+  | "sustainableFuel"
+  | "routeOptimization"
+  | "emissionsTrajectory";
 
 export interface CategoryMeta {
   label: string;
   icon: string;
+  weight: number;
   description: string;
 }
 
 export const CATEGORY_META: Record<CategoryKey, CategoryMeta> = {
+  contrailMitigation: {
+    label: "Contrail Avoidance",
+    icon: "☁️",
+    weight: 30,
+    description: "Active contrail avoidance programs",
+  },
   fleetEfficiency: {
-    label: "Fleet Efficiency",
+    label: "Fuel Efficiency",
     icon: "✈️",
+    weight: 25,
     description: "Aircraft fuel efficiency and fleet age",
+  },
+  sustainableFuel: {
+    label: "SAF Adoption",
+    icon: "🌱",
+    weight: 20,
+    description: "Sustainable aviation fuel adoption %",
   },
   routeOptimization: {
     label: "Route Optimization",
     icon: "🗺️",
+    weight: 15,
     description: "Flight path and altitude planning",
   },
-  contrailMitigation: {
-    label: "Contrail Mitigation",
-    icon: "☁️",
-    description: "Active contrail avoidance programs",
-  },
-  sustainableFuel: {
-    label: "Sustainable Fuel",
-    icon: "🌱",
-    description: "SAF adoption percentage",
+  emissionsTrajectory: {
+    label: "Emissions Trajectory",
+    icon: "📉",
+    weight: 10,
+    description: "Year-over-year emissions improvement",
   },
 };
 
 export const CATEGORY_ORDER: CategoryKey[] = [
   "contrailMitigation",
   "fleetEfficiency",
-  "routeOptimization",
   "sustainableFuel",
+  "routeOptimization",
+  "emissionsTrajectory",
 ];

@@ -252,7 +252,8 @@ function seededRandom(seed: number): number {
 export function getDemoContrailPrediction(
   flightId: string,
   aircraftType: string,
-  numWaypoints: number = 20
+  numWaypoints: number = 20,
+  durationMinutes: number = 0
 ): ContrailPrediction {
   // Generate deterministic but varied data based on flightId + aircraftType
   const seed =
@@ -291,7 +292,9 @@ export function getDemoContrailPrediction(
     A35K: 225,
     E190: 120,
   };
-  const co2Kg = (co2Base[aircraftType] ?? 200) * (0.7 + seededRandom(seed + 2) * 0.6);
+  // Scale CO2 by flight duration — longer flights burn more fuel
+  const durationHours = durationMinutes > 0 ? durationMinutes / 60 : (numWaypoints > 1 ? numWaypoints * 0.5 : 2);
+  const co2Kg = (co2Base[aircraftType] ?? 200) * (durationHours / 3) * (0.85 + seededRandom(seed + 2) * 0.3);
 
   const waypointResults = Array.from({ length: numWaypoints }, (_, i) => {
     const f = i / (numWaypoints - 1);

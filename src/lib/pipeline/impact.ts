@@ -1,6 +1,33 @@
 import type { ContrailMetrics, ContrailPrediction, ContrailRiskRating } from "@/lib/types/contrail";
 import type { ImpactSummary } from "@/lib/types/comparison";
 import { co2ToCarMiles, co2ToTrees } from "@/lib/utils/units";
+import { k2ScoreContrailImpact } from "@/lib/clients/k2-reasoning";
+
+export async function calculateContrailMetricsK2(
+  prediction: ContrailPrediction,
+  aircraftType: string,
+  departureHourUTC: number,
+): Promise<ContrailMetrics> {
+  const persistentWaypoints = prediction.waypointResults.filter((w) => w.persistent).length;
+  const totalWaypoints = prediction.waypointResults.length;
+
+  const result = await k2ScoreContrailImpact({
+    formationProbability: prediction.summary.contrailProbability,
+    radiativeForcingWM2: prediction.summary.meanRfNetWM2,
+    persistenceHours: prediction.summary.maxContrailLifetimeHours,
+    departureHourUTC,
+    aircraftType,
+    persistentWaypoints,
+    totalWaypoints,
+  });
+
+  return {
+    riskRating: result.riskRating,
+    impactScore: result.impactScore,
+    formationAltitudeFt: undefined,
+    persistenceHours: prediction.summary.maxContrailLifetimeHours || undefined,
+  };
+}
 
 export function calculateContrailMetrics(
   prediction: ContrailPrediction

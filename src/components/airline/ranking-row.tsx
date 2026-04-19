@@ -36,9 +36,16 @@ export function RankingRow({ airline, index }: RankingRowProps) {
               {airline.overallGrade}
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold group-hover:text-primary transition-colors">
-                {airline.airlineName}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold group-hover:text-primary transition-colors">
+                  {airline.airlineName}
+                </h3>
+                {airline.tier && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getTierColor(airline.tier)}`}>
+                    {airline.tier}
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Fleet: {airline.fleetProfile.totalAircraft}</span>
                 <span>•</span>
@@ -66,4 +73,15 @@ export function RankingRow({ airline, index }: RankingRowProps) {
       </Link>
     </motion.div>
   );
+}
+
+function getTierColor(tier: string): string {
+  switch (tier) {
+    case "Sky Saints": return "bg-emerald-500/15 text-emerald-400";
+    case "Clean Cruisers": return "bg-sky-500/15 text-sky-400";
+    case "Middle of the Pack": return "bg-amber-500/15 text-amber-400";
+    case "Greenwash Gold Medalists": return "bg-orange-500/15 text-orange-400";
+    case "Contrail Criminals": return "bg-red-500/15 text-red-400";
+    default: return "bg-white/10 text-white/60";
+  }
 }

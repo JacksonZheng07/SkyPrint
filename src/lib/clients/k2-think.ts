@@ -63,10 +63,11 @@ export async function generateAirlineNarrative(context: {
   overallGrade: string;
   overallScore: number;
   categories: {
-    fleetEfficiency: number;
-    routeOptimization: number;
     contrailMitigation: number;
+    fleetEfficiency: number;
     sustainableFuel: number;
+    routeOptimization: number;
+    emissionsTrajectory: number;
   };
   fleetAge: number;
   contrailProgramActive: boolean;
@@ -82,10 +83,11 @@ export async function generateAirlineNarrative(context: {
       role: "user",
       content: `Analyze ${context.airlineName} (${context.airlineCode}):
 - Overall grade: ${context.overallGrade} (${context.overallScore}/100)
-- Fleet efficiency: ${context.categories.fleetEfficiency}/100 (avg age: ${context.fleetAge} years)
-- Route optimization: ${context.categories.routeOptimization}/100
-- Contrail mitigation: ${context.categories.contrailMitigation}/100 (program active: ${context.contrailProgramActive})
-- Sustainable fuel: ${context.categories.sustainableFuel}/100 (SAF adoption: ${context.safPercent}%)
+- Contrail avoidance: ${context.categories.contrailMitigation}/100 (30% weight, program active: ${context.contrailProgramActive})
+- Fleet efficiency: ${context.categories.fleetEfficiency}/100 (25% weight, avg age: ${context.fleetAge} years)
+- SAF adoption: ${context.categories.sustainableFuel}/100 (20% weight, ${context.safPercent}% of fuel)
+- Route optimization: ${context.categories.routeOptimization}/100 (15% weight)
+- Emissions trajectory: ${context.categories.emissionsTrajectory}/100 (10% weight)
 
 Provide a scoring narrative highlighting contrail impact as the primary differentiator.`,
     },

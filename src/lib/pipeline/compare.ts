@@ -1,16 +1,18 @@
 import { searchFlights as searchSerpApi } from "@/lib/clients/serpapi";
 import { searchFlights as searchAviationstack } from "@/lib/clients/aviationstack";
 import { predictContrails } from "@/lib/clients/contrail-engine";
-import { getDemoFlights, getDemoContrailPrediction } from "@/lib/demo/flights";
+import { getDemoFlights } from "@/lib/demo/flights";
+import { k2AssessFlightClimate } from "@/lib/clients/k2-reasoning";
 import type {
   FlightComparison,
   FlightComparisonItem,
 } from "@/lib/types/comparison";
 import type { FlightOption, FlightSearchParams, Waypoint } from "@/lib/types/flight";
 import { AIRPORT_COORDS } from "@/lib/utils/airports";
-import { interpolateGreatCircle } from "@/lib/utils/geo";
+import { interpolateGreatCircle, greatCircleDistanceKm } from "@/lib/utils/geo";
 import {
   calculateContrailMetrics,
+  calculateContrailMetricsK2,
   calculateTotalImpactScore,
 } from "./impact";
 import { generateImpactCopy, inferConfidence } from "./copy";
@@ -32,56 +34,118 @@ export async function compareFlights(
     }
   }
 
+  // Calculate great-circle distance for this route
+  const originCoords = AIRPORT_COORDS[params.origin];
+  const destCoords = AIRPORT_COORDS[params.destination];
+  const distanceKm = originCoords && destCoords
+    ? Math.round(greatCircleDistanceKm(
+        originCoords.latitude, originCoords.longitude,
+        destCoords.latitude, destCoords.longitude
+      ))
+    : 0;
+
   // Step 2: Generate trajectories for each flight
   const flightsWithTrajectories = flights.slice(0, 6).map((flight) => ({
     flight,
     waypoints: getTrajectory(flight, params),
   }));
 
-  // Step 3: Get contrail predictions — try real engine, fall back to demo
+  // Step 3: Get contrail predictions — try real engine, then K2 reasoning, then local fallback
   const comparisonItems: FlightComparisonItem[] = await Promise.all(
     flightsWithTrajectories.map(async ({ flight, waypoints }, index) => {
       let contrail;
+      let metrics;
+
       try {
+        // First: try the real contrail engine
         contrail = await predictContrails(
           waypoints,
           flight.aircraftType,
           flight.flightId
         );
+        // If real engine works, score with K2 or local
+        const depHour = flight.departureTime
+          ? new Date(flight.departureTime).getUTCHours()
+          : 12;
+        try {
+          metrics = await calculateContrailMetricsK2(contrail, flight.aircraftType, depHour);
+        } catch {
+          metrics = calculateContrailMetrics(contrail);
+        }
+
+        return {
+          flight,
+          contrail,
+          metrics,
+          totalImpactScore: 0,
+          rank: index + 1,
+          warmingRatio: 1.0,
+          impactCopy: "",
+          confidenceLevel: "medium" as const,
+        };
       } catch {
-        contrail = getDemoContrailPrediction(
-          flight.flightId,
-          flight.aircraftType,
-          waypoints.length
-        );
+        // Contrail engine unavailable — use K2 to reason from real flight data
+        const assessment = await k2AssessFlightClimate({
+          airline: flight.airline,
+          airlineCode: flight.airlineCode,
+          aircraftType: flight.aircraftType,
+          origin: params.origin,
+          destination: params.destination,
+          distanceKm,
+          durationMinutes: flight.duration,
+          departureTimeISO: flight.departureTime,
+          stops: flight.stops,
+        });
+
+        // Build a contrail prediction structure from K2's assessment
+        contrail = {
+          flightId: flight.flightId,
+          waypointResults: [],
+          summary: {
+            contrailProbability: assessment.contrailImpactScore / 100,
+            totalEnergyForcingJ: 0,
+            meanRfNetWM2: 0,
+            maxContrailLifetimeHours: 0,
+          },
+          co2Kg: assessment.co2Kg,
+          usedFallback: true,
+        };
+
+        metrics = {
+          riskRating: assessment.contrailRiskRating,
+          impactScore: assessment.contrailImpactScore,
+          formationAltitudeFt: undefined,
+          persistenceHours: undefined,
+        };
+
+        return {
+          flight,
+          contrail,
+          metrics,
+          totalImpactScore: assessment.totalImpactScore,
+          rank: index + 1,
+          warmingRatio: 1.0,
+          impactCopy: assessment.reasoning,
+          confidenceLevel: "medium" as const,
+        };
       }
-
-      const metrics = calculateContrailMetrics(contrail);
-
-      return {
-        flight,
-        contrail,
-        metrics,
-        totalImpactScore: 0,
-        rank: index + 1,
-        warmingRatio: 1.0,
-        impactCopy: "",
-        confidenceLevel: "medium" as const,
-      };
     })
   );
 
-  // Step 4: Calculate average CO2 and total impact scores
+  // Step 4: Calculate average CO2 and recalculate total impact for engine-sourced items
   const averageCo2 =
     comparisonItems.reduce((sum, item) => sum + item.contrail.co2Kg, 0) /
     comparisonItems.length;
 
   for (const item of comparisonItems) {
-    item.totalImpactScore = calculateTotalImpactScore(
-      item.contrail.co2Kg,
-      item.metrics,
-      averageCo2
-    );
+    // Only recalculate if not already set by K2 (totalImpactScore === 0 means engine path)
+    if (item.totalImpactScore === 0) {
+      item.totalImpactScore = calculateTotalImpactScore(
+        item.contrail.co2Kg,
+        item.metrics,
+        averageCo2
+      );
+    }
   }
 
   // Step 5: Rank by total impact (lower is better)
@@ -100,7 +164,10 @@ export async function compareFlights(
         ? item.totalImpactScore / bestItem.totalImpactScore
         : 1.0;
     item.confidenceLevel = inferConfidence(item);
-    item.impactCopy = generateImpactCopy(item, bestItem, worstItem, item.confidenceLevel);
+    // Preserve K2 reasoning if already set, otherwise generate copy
+    if (!item.impactCopy || !item.contrail.usedFallback) {
+      item.impactCopy = generateImpactCopy(item, bestItem, worstItem, item.confidenceLevel);
+    }
   }
 
   const warmingSpreadPct =
@@ -136,7 +203,6 @@ function getTrajectory(
   const destination = AIRPORT_COORDS[params.destination];
 
   if (!origin || !destination) {
-    // Use a generic trajectory rather than silently returning wrong data
     return interpolateGreatCircle(
       { latitude: 40, longitude: -74 },
       { latitude: 34, longitude: -118 },
