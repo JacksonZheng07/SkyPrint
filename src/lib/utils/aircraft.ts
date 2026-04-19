@@ -60,24 +60,45 @@ export function isNewGenEngine(type: string): boolean {
 /**
  * ICAO-methodology CO2 per passenger calculation.
  * This is the single source of truth for CO2 estimation across the app.
+ *
+ * For connecting flights: the great-circle origin→destination distance
+ * understates actual distance flown (e.g. JFK→FRA→MAD is much farther
+ * than JFK→MAD direct). When durationMinutes is provided, we estimate
+ * actual distance from flight time for a more accurate calculation.
  */
 export function calculateCo2PerPax(params: {
   aircraftType: string;
   distanceKm: number;
   stops?: number;
+  durationMinutes?: number;
   loadFactor?: number;
 }): number {
-  const { aircraftType, distanceKm, stops = 0, loadFactor = 0.82 } = params;
+  const { aircraftType, distanceKm, stops = 0, durationMinutes, loadFactor = 0.82 } = params;
   const fuelEff = getFuelEfficiency(aircraftType);
-  const isShortHaul = distanceKm < 1500;
+
+  // For connecting flights, estimate actual distance from duration.
+  // Typical cruise speed ~850 km/h. Subtract ~40min per leg for taxi/climb/descent.
+  // For direct flights, use the greater of great-circle and duration-based estimate.
+  let effectiveDistanceKm = distanceKm;
+  if (durationMinutes && durationMinutes > 0) {
+    const legs = stops + 1;
+    const groundTimeMinPerLeg = 40; // taxi + climb + descent
+    const cruiseMinutes = Math.max(0, durationMinutes - legs * groundTimeMinPerLeg);
+    const durationBasedKm = (cruiseMinutes / 60) * 850;
+    // Use whichever is larger — connecting flights will have much longer duration-based distance
+    effectiveDistanceKm = Math.max(distanceKm, durationBasedKm);
+  }
+
+  const isShortHaul = effectiveDistanceKm < 1500;
 
   const taxiOverhead = isShortHaul ? 1.05 : 1.03;
   const climbOverhead = isShortHaul ? 1.12 : 1.08;
   const routingOverhead = 1.03;
-  const stopsOverhead = 1 + stops * 0.08;
+  // Stops still add overhead (extra climb/descent cycles beyond what distance captures)
+  const stopsOverhead = 1 + stops * 0.05;
   const loadAdjustment = 0.82 / loadFactor;
 
-  const baseFuelL = (fuelEff * distanceKm) / 100;
+  const baseFuelL = (fuelEff * effectiveDistanceKm) / 100;
   const adjustedFuelL = baseFuelL * taxiOverhead * climbOverhead * routingOverhead * stopsOverhead * loadAdjustment;
   return Math.round(adjustedFuelL * 2.54); // ICAO: 3.16 kg CO2/kg × 0.804 kg/L
 }

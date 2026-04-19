@@ -734,7 +734,7 @@ export async function k2AssessFlightClimate(params: {
   // ── Use centralized aircraft data for all calculations ──
   const { calculateCo2PerPax, calculateContrailScore, getFuelEfficiency, isNewGenEngine } = await import("@/lib/utils/aircraft");
 
-  const co2Kg = calculateCo2PerPax({ aircraftType, distanceKm, stops });
+  const co2Kg = calculateCo2PerPax({ aircraftType, distanceKm, stops, durationMinutes });
   const fuelEff = getFuelEfficiency(aircraftType);
   const { impactScore: contrailImpactScore, riskRating: contrailRiskRating } = calculateContrailScore({
     aircraftType,

@@ -95,6 +95,7 @@ export async function compareFlights(
           aircraftType: flight.aircraftType,
           distanceKm,
           stops: flight.stops,
+          durationMinutes: flight.duration,
         });
         const contrailResult = calculateContrailScore({
           aircraftType: flight.aircraftType,
