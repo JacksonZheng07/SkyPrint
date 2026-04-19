@@ -24,6 +24,16 @@ const AIRCRAFT_OPTIONS: { value: AircraftType; label: string; short: string }[] 
   { value: "A332", label: "Airbus A330-200", short: "A330-200" },
 ];
 
+const AIRCRAFT_CRUISE_ALT: Record<string, number> = {
+  B738: 35000,
+  B789: 40000,
+  B77W: 35000,
+  A320: 35000,
+  A321: 35000,
+  A359: 41000,
+  A332: 37000,
+};
+
 const AIRLINE_AIRCRAFT: Record<string, AircraftType> = {
   AAL: "B77W", BAW: "B77W", DAL: "B77W", UAL: "B77W",
   VIR: "A332", DLH: "A333" as AircraftType, AFR: "B77W", KLM: "B77W",
@@ -60,7 +70,7 @@ export default function SimulatePage() {
   const [destination, setDestination] = useState("LHR");
   const [date, setDate] = useState(todayISO());
   const [aircraftType, setAircraftType] = useState<AircraftType>("B789");
-  const cruiseAlt = 35000;
+  const cruiseAlt = AIRCRAFT_CRUISE_ALT[aircraftType] ?? 35000;
   const [resultTab, setResultTab] = useState<"baseline" | "optimized">("baseline");
   const [isNight, setIsNight] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
@@ -89,7 +99,7 @@ export default function SimulatePage() {
 
   useEffect(() => {
     if (!hasSimulatedOnce.current) return;
-    triggerSimulate(origin, destination, date, aircraftType, cruiseAlt, isNight);
+    triggerSimulate(origin, destination, date, aircraftType, AIRCRAFT_CRUISE_ALT[aircraftType] ?? 35000, isNight);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aircraftType, date]);
 
