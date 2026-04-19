@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import type { FlightComparisonItem } from "@/lib/types/comparison";
 import { formatDuration } from "@/lib/utils/format";
 import { AirlineLogo } from "./airline-logo";
+import { deriveAirlineEco } from "@/lib/pipeline/airline-eco";
 
 interface ComparisonCardProps {
   item: FlightComparisonItem;
@@ -220,25 +221,11 @@ function getBadge(
   return null;
 }
 
-// Deterministic grade based on airline code
-const AIRLINE_GRADES: Record<string, { grade: string; color: string }> = {
-  AS: { grade: "A", color: "text-emerald-400 bg-emerald-500/15" },
-  DL: { grade: "A-", color: "text-emerald-400 bg-emerald-500/15" },
-  UA: { grade: "B+", color: "text-sky-400 bg-sky-500/15" },
-  B6: { grade: "B", color: "text-sky-400 bg-sky-500/15" },
-  AA: { grade: "C+", color: "text-amber-400 bg-amber-500/15" },
-  WN: { grade: "C", color: "text-amber-400 bg-amber-500/15" },
-  NK: { grade: "D+", color: "text-orange-400 bg-orange-500/15" },
-  BA: { grade: "B+", color: "text-sky-400 bg-sky-500/15" },
-  VS: { grade: "B", color: "text-sky-400 bg-sky-500/15" },
-  NH: { grade: "A-", color: "text-emerald-400 bg-emerald-500/15" },
-};
-
 function AirlineGrade({ code }: { code: string }) {
-  const info = AIRLINE_GRADES[code] ?? { grade: "C", color: "text-amber-400 bg-amber-500/15" };
+  const eco = deriveAirlineEco(code);
   return (
-    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${info.color}`}>
-      {info.grade}
+    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${eco.gradeColor}`}>
+      {eco.grade}
     </span>
   );
 }

@@ -10,6 +10,7 @@ import type {
 import type { FlightOption, FlightSearchParams, Waypoint } from "@/lib/types/flight";
 import { AIRPORT_COORDS } from "@/lib/utils/airports";
 import { interpolateGreatCircle, greatCircleDistanceKm } from "@/lib/utils/geo";
+import { calculateCo2PerPax, calculateContrailScore } from "@/lib/utils/aircraft";
 import {
   calculateContrailMetrics,
   calculateContrailMetricsK2,
@@ -84,36 +85,63 @@ export async function compareFlights(
           confidenceLevel: "medium" as const,
         };
       } catch {
-        // Contrail engine unavailable — use K2 to reason from real flight data
-        const assessment = await k2AssessFlightClimate({
-          airline: flight.airline,
-          airlineCode: flight.airlineCode,
+        // Contrail engine unavailable — use centralized ICAO calculation + K2 for reasoning
+        const depHour = flight.departureTime
+          ? new Date(flight.departureTime).getUTCHours()
+          : 12;
+
+        // Deterministic numbers from centralized aircraft data
+        const co2Kg = calculateCo2PerPax({
           aircraftType: flight.aircraftType,
-          origin: params.origin,
-          destination: params.destination,
           distanceKm,
-          durationMinutes: flight.duration,
-          departureTimeISO: flight.departureTime,
           stops: flight.stops,
         });
+        const contrailResult = calculateContrailScore({
+          aircraftType: flight.aircraftType,
+          departureHourUTC: depHour,
+          durationMinutes: flight.duration,
+          distanceKm,
+        });
 
-        // Build a contrail prediction structure from K2's assessment
+        // K2 provides reasoning narrative only (numbers come from above)
+        let reasoning = "";
+        try {
+          const assessment = await k2AssessFlightClimate({
+            airline: flight.airline,
+            airlineCode: flight.airlineCode,
+            aircraftType: flight.aircraftType,
+            origin: params.origin,
+            destination: params.destination,
+            distanceKm,
+            durationMinutes: flight.duration,
+            departureTimeISO: flight.departureTime,
+            stops: flight.stops,
+          });
+          reasoning = assessment.reasoning;
+        } catch {
+          // K2 unavailable — empty reasoning is fine
+        }
+
+        const isShortHaul = distanceKm < 1500;
+        const co2Component = Math.min(50, (co2Kg / (isShortHaul ? 150 : distanceKm < 4000 ? 300 : 600)) * 40);
+        const totalScore = Math.min(100, Math.max(0, Math.round(co2Component + contrailResult.impactScore * 0.6)));
+
         contrail = {
           flightId: flight.flightId,
           waypointResults: [],
           summary: {
-            contrailProbability: assessment.contrailImpactScore / 100,
+            contrailProbability: contrailResult.impactScore / 100,
             totalEnergyForcingJ: 0,
             meanRfNetWM2: 0,
             maxContrailLifetimeHours: 0,
           },
-          co2Kg: assessment.co2Kg,
+          co2Kg,
           usedFallback: true,
         };
 
         metrics = {
-          riskRating: assessment.contrailRiskRating,
-          impactScore: assessment.contrailImpactScore,
+          riskRating: contrailResult.riskRating,
+          impactScore: contrailResult.impactScore,
           formationAltitudeFt: undefined,
           persistenceHours: undefined,
         };
@@ -122,10 +150,10 @@ export async function compareFlights(
           flight,
           contrail,
           metrics,
-          totalImpactScore: assessment.totalImpactScore,
+          totalImpactScore: totalScore,
           rank: index + 1,
           warmingRatio: 1.0,
-          impactCopy: assessment.reasoning,
+          impactCopy: reasoning,
           confidenceLevel: "medium" as const,
         };
       }

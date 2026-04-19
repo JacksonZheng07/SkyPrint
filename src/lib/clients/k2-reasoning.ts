@@ -731,40 +731,22 @@ export async function k2AssessFlightClimate(params: {
   const isShortHaul = distanceKm < 1500;
   const durationHours = durationMinutes / 60;
 
-  // ── Local fallback: science-grounded estimate ──
+  // ── Use centralized aircraft data for all calculations ──
+  const { calculateCo2PerPax, calculateContrailScore, getFuelEfficiency, isNewGenEngine } = await import("@/lib/utils/aircraft");
 
-  // CO2: look up aircraft efficiency, scale by distance
-  const efficiencyMap: Record<string, number> = {
-    A220: 2.3, A320: 2.5, A321: 2.4, B738: 3.2, B739: 3.1, B789: 2.5,
-    B78X: 2.5, B77W: 3.5, A332: 3.3, A333: 3.3, A359: 2.4, A35K: 2.3,
-    E190: 3.4, A388: 3.8, B744: 4.2,
-  };
-  const fuelEff = efficiencyMap[aircraftType] ?? 3.0;
-  const taxiOverhead = isShortHaul ? 1.05 : 1.03;
-  const climbOverhead = isShortHaul ? 1.12 : 1.08;
-  const stopsOverhead = 1 + stops * 0.08;
-  const baseFuelL = (fuelEff * distanceKm) / 100;
-  const adjustedFuelL = baseFuelL * taxiOverhead * climbOverhead * 1.03 * stopsOverhead;
-  const co2Kg = Math.round(adjustedFuelL * 2.54);
-
-  // Contrail: engine soot + time of day + altitude/duration proxy
-  const newGenTypes = ["B789", "A359", "A35K", "A321", "A320", "A220", "B78X"];
-  const sootFactor = newGenTypes.includes(aircraftType) ? 0.6 : 1.0;
-  const nightFactor = depHour >= 18 || depHour < 6 ? 1.4
-    : (depHour >= 6 && depHour < 8) || (depHour >= 16 && depHour < 18) ? 1.15
-    : 0.75;
-  const durationFactor = Math.min(1.5, 0.5 + durationHours / 8);
-  const altitudeFactor = isShortHaul ? 0.6 : 1.0;
-
-  const contrailRaw = 35 * sootFactor * nightFactor * durationFactor * altitudeFactor;
-  const contrailImpactScore = Math.min(100, Math.max(0, Math.round(contrailRaw)));
-  const contrailRiskRating: "low" | "medium" | "high" =
-    contrailImpactScore < 25 ? "low" : contrailImpactScore < 60 ? "medium" : "high";
+  const co2Kg = calculateCo2PerPax({ aircraftType, distanceKm, stops });
+  const fuelEff = getFuelEfficiency(aircraftType);
+  const { impactScore: contrailImpactScore, riskRating: contrailRiskRating } = calculateContrailScore({
+    aircraftType,
+    departureHourUTC: depHour,
+    durationMinutes,
+    distanceKm,
+  });
 
   const co2Component = Math.min(50, (co2Kg / (isShortHaul ? 150 : distanceKm < 4000 ? 300 : 600)) * 40);
   const totalImpactScore = Math.min(100, Math.max(0, Math.round(co2Component + contrailImpactScore * 0.6)));
 
-  const localReasoning = `${aircraftType} at ${fuelEff} L/100pax-km over ${distanceKm}km = ~${co2Kg}kg CO₂/pax. ${depHour >= 18 || depHour < 6 ? "Night departure amplifies contrail warming." : "Daytime departure partially offsets contrail warming via solar reflection."} ${newGenTypes.includes(aircraftType) ? "New-gen low-soot engines reduce contrail impact ~40%." : "Legacy engines produce higher soot, increasing contrail optical thickness."}${stops > 0 ? ` ${stops} stop(s) add ~${stops * 8}% fuel overhead.` : ""}`;
+  const localReasoning = `${aircraftType} at ${fuelEff} L/100pax-km over ${distanceKm}km = ~${co2Kg}kg CO₂/pax. ${depHour >= 18 || depHour < 6 ? "Night departure amplifies contrail warming." : "Daytime departure partially offsets contrail warming via solar reflection."} ${isNewGenEngine(aircraftType) ? "New-gen low-soot engines reduce contrail impact ~40%." : "Legacy engines produce higher soot, increasing contrail optical thickness."}${stops > 0 ? ` ${stops} stop(s) add ~${stops * 8}% fuel overhead.` : ""}`;
 
   // Always use local ICAO-based numbers for consistency — K2 only provides reasoning narrative
   const apiKey = process.env.K2_THINK_API_KEY;
