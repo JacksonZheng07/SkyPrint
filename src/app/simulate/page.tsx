@@ -139,16 +139,16 @@ export default function SimulatePage() {
         variants={stagger}
       >
         {/* Header */}
-        <motion.div variants={fadeUp}>
-          <h1 className="text-3xl font-bold text-white">Simulate Route</h1>
-          <p className="mt-1 text-sm text-white/50">
+        <motion.div variants={fadeUp} className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight text-white">Simulate Route</h1>
+          <p className="max-w-xl text-sm leading-relaxed text-white/50">
             Visualize how altitude optimization reduces contrail formation while minimizing fuel penalties.
           </p>
         </motion.div>
 
         {/* Input bar */}
         <motion.div variants={fadeUp}>
-          <div className="flex flex-col gap-px overflow-hidden rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl lg:flex-row lg:items-stretch">
+          <div className="flex flex-col gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05] shadow-2xl shadow-black/20 backdrop-blur-2xl lg:flex-row lg:items-stretch">
             {/* From */}
             <div className="flex flex-1 flex-col gap-0.5 border-b border-white/10 px-5 py-4 lg:border-b-0 lg:border-r">
               <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">From</span>
@@ -285,7 +285,7 @@ export default function SimulatePage() {
         {/* Map + Results side by side */}
         <motion.div variants={fadeUp} className="grid gap-4 lg:grid-cols-[1fr_380px]">
           {/* Map */}
-          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl" style={{ minHeight: 480 }}>
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-2xl shadow-black/20 backdrop-blur-xl" style={{ minHeight: 480 }}>
             <PlaygroundMap ref={mapRef} />
 
             {/* Route label overlay */}
@@ -345,43 +345,56 @@ export default function SimulatePage() {
           </div>
 
           {/* Simulation Results panel */}
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-            <h3 className="text-lg font-semibold text-white">Simulation Results</h3>
-            <p className="text-[11px] text-white/40">Comparison: Baseline vs Optimized</p>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl shadow-black/20 backdrop-blur-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15">
+                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Simulation Results</h3>
+                <p className="text-[11px] text-white/40">Baseline vs Optimized</p>
+              </div>
+            </div>
 
             {result ? (
               <SimulationResults result={result} tab={resultTab} onTabChange={setResultTab} />
             ) : (
-              <div className="mt-8 flex flex-col items-center gap-3 text-center">
-                <svg className="h-12 w-12 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-                <p className="text-sm text-white/30">Results will appear here after simulation</p>
+              <div className="mt-10 flex flex-col items-center gap-4 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03]">
+                  <svg className="h-7 w-7 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-white/30">Enter a route and click Simulate to see results</p>
               </div>
             )}
           </div>
         </motion.div>
 
         {/* Quick Simulations */}
-        <motion.div variants={fadeUp} className="space-y-3">
-          <div>
-            <h2 className="text-xl font-semibold text-white">Quick Simulations</h2>
-            <p className="text-sm text-white/40">Or pick a recent transatlantic flight to simulate</p>
+        <motion.div variants={fadeUp} className="space-y-4">
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">Quick Simulations</h2>
+              <p className="mt-1 text-sm text-white/40">Pick a recent transatlantic flight to simulate</p>
+            </div>
           </div>
 
           {/* Search bar */}
           <div className="relative max-w-lg">
-            <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
             <input
               placeholder="Search by flight number, airline, or airport..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 backdrop-blur-xl focus:border-white/20 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 backdrop-blur-xl transition-colors focus:border-white/20 focus:bg-white/[0.06] focus:outline-none"
             />
           </div>
 
           {/* Horizontal flight cards */}
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
             {quickFlights.length > 0
               ? quickFlights.map((f) => (
                   <QuickFlightCard key={`${f.callsign}-${f.dateRaw}`} flight={f} onSelect={handleQuickSelect} />
@@ -428,19 +441,19 @@ function SimulationResults({
   return (
     <div className="mt-4 space-y-4">
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
         <button
           onClick={() => onTabChange("baseline")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            tab === "baseline" ? "bg-white/15 text-white" : "text-white/40 hover:text-white/60"
+          className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            tab === "baseline" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60"
           }`}
         >
           Baseline Route
         </button>
         <button
           onClick={() => onTabChange("optimized")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            tab === "optimized" ? "bg-emerald-500/20 text-emerald-400" : "text-white/40 hover:text-white/60"
+          className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            tab === "optimized" ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-white/40 hover:text-white/60"
           }`}
         >
           Optimized Route
@@ -448,87 +461,91 @@ function SimulationResults({
       </div>
 
       {/* Metrics */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* CO2 */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
-            <svg className="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04]">
+            <svg className="h-4 w-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs text-white/40">CO₂ Emissions</p>
+            <p className="text-xs font-medium text-white/60">CO₂ Emissions</p>
             <p className="text-[10px] text-white/30">per passenger</p>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2.5 text-sm">
             <span className="font-bold text-white">{Math.round(baseline.co2Kg)} kg</span>
+            <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
             <span className="font-bold text-white">{Math.round(optimized.co2Kg)} kg</span>
-            <span className={`text-xs font-medium ${co2Delta > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${co2Delta > 0 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
               {co2Delta > 0 ? "+" : ""}{co2DeltaPct.toFixed(1)}%
             </span>
           </div>
         </div>
 
         {/* Contrail Impact */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
-            <svg className="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04]">
+            <svg className="h-4 w-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs text-white/40">Contrail Impact</p>
-            <p className="text-[10px] text-white/30">relative</p>
+            <p className="text-xs font-medium text-white/60">Contrail Impact</p>
+            <p className="text-[10px] text-white/30">relative risk</p>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className={`font-bold ${contrailBaselineRisk > 0.5 ? "text-red-400" : contrailBaselineRisk > 0.25 ? "text-amber-400" : "text-emerald-400"}`}>
+          <div className="flex items-center gap-2.5 text-sm">
+            <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailBaselineRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailBaselineRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
               {contrailBaselineRisk > 0.5 ? "High" : contrailBaselineRisk > 0.25 ? "Med" : "Low"}
             </span>
-            <span className={`font-bold ${contrailOptimizedRisk > 0.5 ? "text-red-400" : contrailOptimizedRisk > 0.25 ? "text-amber-400" : "text-emerald-400"}`}>
+            <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailOptimizedRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailOptimizedRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
               {contrailOptimizedRisk > 0.5 ? "High" : contrailOptimizedRisk > 0.25 ? "Med" : "Low"}
             </span>
-            <span className="text-xs font-medium text-emerald-400">-{contrailReductionPct}%</span>
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-{contrailReductionPct}%</span>
           </div>
         </div>
 
         {/* Total Climate Impact */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
-            <svg className="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04]">
+            <svg className="h-4 w-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs text-white/40">Total Climate Impact</p>
+            <p className="text-xs font-medium text-white/60">Total Climate Impact</p>
             <p className="text-[10px] text-white/30">score (lower is better)</p>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-xs font-bold text-white">{baselineImpact}</span>
-            <span className="text-white/30">&rarr;</span>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">{optimizedImpact}</span>
-            <span className="text-xs font-medium text-emerald-400">-{impactReductionPct}%</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs font-bold text-white">{baselineImpact}</span>
+            <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">{optimizedImpact}</span>
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-{impactReductionPct}%</span>
           </div>
         </div>
       </div>
 
       {/* Insight callout */}
       {adj && (
-        <div className="flex gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
-          <svg className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-          </svg>
+        <div className="flex gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] p-3.5 backdrop-blur-sm">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15">
+            <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+            </svg>
+          </div>
           <p className="text-xs leading-relaxed text-white/60">
-            Lowering altitude by {Math.abs(adj.suggestedAltitudeFt - adj.originalAltitudeFt).toLocaleString()} ft avoids ice supersaturated regions, reducing contrail formation significantly with minimal fuel penalty.
+            Lowering altitude by <span className="font-semibold text-emerald-400">{Math.abs(adj.suggestedAltitudeFt - adj.originalAltitudeFt).toLocaleString()} ft</span> avoids ice supersaturated regions, reducing contrail formation significantly with minimal fuel penalty.
           </p>
         </div>
       )}
 
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-2 pt-1">
-        <button className="rounded-lg border border-white/10 bg-white/5 py-2.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10">
+        <button className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-xs font-medium text-white/60 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white">
           View Full Report
         </button>
-        <button className="rounded-lg bg-emerald-600 py-2.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700">
+        <button className="rounded-xl bg-emerald-600 py-2.5 text-xs font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30">
           Save Simulation
         </button>
       </div>
@@ -562,21 +579,26 @@ function QuickFlightCard({ flight, onSelect }: { flight: QuickFlight; onSelect: 
   return (
     <button
       onClick={() => onSelect(flight)}
-      className="flex shrink-0 flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl transition-all hover:border-white/20 hover:bg-white/10"
-      style={{ minWidth: 180 }}
+      className="group flex shrink-0 flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-2xl transition-all hover:border-white/20 hover:bg-white/[0.08] hover:shadow-lg hover:shadow-black/20"
+      style={{ minWidth: 200 }}
     >
-      <div className="flex items-center gap-2.5">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-bold text-white ${logo?.color ?? "bg-white/20"}`}>
+      <div className="flex items-center gap-3">
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-[10px] font-bold text-white shadow-sm ${logo?.color ?? "bg-white/20"}`}>
           {flight.airline.slice(0, 2)}
         </div>
         <div className="text-left">
-          <p className="text-sm font-semibold text-white">{flight.callsign}</p>
+          <p className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">{flight.callsign}</p>
           <p className="text-[10px] text-white/40">{logo?.name ?? flight.airline}</p>
         </div>
       </div>
-      <div className="text-left">
-        <p className="text-xs font-medium text-white/70">{flight.origin} &rarr; {flight.destination}</p>
-        <p className="text-[10px] text-white/30">{flight.date}</p>
+      <div className="flex items-center justify-between text-left">
+        <div>
+          <p className="text-xs font-medium text-white/70">{flight.origin} &rarr; {flight.destination}</p>
+          <p className="text-[10px] text-white/30">{flight.date}</p>
+        </div>
+        <svg className="h-4 w-4 text-white/20 transition-all group-hover:translate-x-0.5 group-hover:text-emerald-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
       </div>
     </button>
   );
@@ -619,14 +641,21 @@ const ICAO_TO_IATA_SHORT: Record<string, string> = {
   EGCC: "MAN", LIRF: "FCO", LEBL: "BCN", LPPT: "LIS",
 };
 
-const FALLBACK_FLIGHTS: QuickFlight[] = [
-  { callsign: "DAL44", airline: "DAL", origin: "JFK", destination: "DUB", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-  { callsign: "KLM644", airline: "KLM", origin: "JFK", destination: "AMS", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-  { callsign: "BAW172", airline: "BAW", origin: "JFK", destination: "LHR", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-  { callsign: "VIR154", airline: "VIR", origin: "JFK", destination: "LHR", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-  { callsign: "DAL126", airline: "DAL", origin: "JFK", destination: "MAD", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-  { callsign: "DAL52", airline: "DAL", origin: "JFK", destination: "ZRH", date: "Apr 1, 2026", dateRaw: "2026-04-01" },
-];
+function buildFallbackFlights(): QuickFlight[] {
+  const today = new Date();
+  const dateRaw = today.toISOString().split("T")[0];
+  const date = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return [
+    { callsign: "DAL44", airline: "DAL", origin: "JFK", destination: "DUB", date, dateRaw },
+    { callsign: "KLM644", airline: "KLM", origin: "JFK", destination: "AMS", date, dateRaw },
+    { callsign: "BAW172", airline: "BAW", origin: "JFK", destination: "LHR", date, dateRaw },
+    { callsign: "VIR154", airline: "VIR", origin: "JFK", destination: "LHR", date, dateRaw },
+    { callsign: "DAL126", airline: "DAL", origin: "JFK", destination: "MAD", date, dateRaw },
+    { callsign: "DAL52", airline: "DAL", origin: "JFK", destination: "ZRH", date, dateRaw },
+  ];
+}
+
+const FALLBACK_FLIGHTS: QuickFlight[] = buildFallbackFlights();
 
 function formatDateShort(iso: string): string {
   if (!iso) return "";
