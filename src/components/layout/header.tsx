@@ -14,11 +14,19 @@ const NAV_ITEMS = [
 
 export function Header() {
   const pathname = usePathname();
+  const isMission = pathname === "/mission";
 
   return (
-    <header className={cn(
-      "fixed inset-x-0 top-0 z-50 bg-black/20 backdrop-blur-sm"
-    )}>
+    <header
+      className={cn("fixed inset-x-0 top-0 z-50 backdrop-blur-md transition-colors")}
+      style={isMission ? {
+        background: "rgba(10,20,40,0.35)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 1px 24px rgba(0,0,0,0.3)",
+      } : {
+        background: "rgba(0,0,0,0.20)",
+      }}
+    >
       <style>{`
         @keyframes aurora-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(45,212,191,0.5), 0 0 20px rgba(45,212,191,0.25), 0 0 40px rgba(45,212,191,0.1); }
