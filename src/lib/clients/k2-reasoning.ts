@@ -764,62 +764,53 @@ export async function k2AssessFlightClimate(params: {
   const co2Component = Math.min(50, (co2Kg / (isShortHaul ? 150 : distanceKm < 4000 ? 300 : 600)) * 40);
   const totalImpactScore = Math.min(100, Math.max(0, Math.round(co2Component + contrailImpactScore * 0.6)));
 
-  const localFallback: FlightClimateAssessment = {
-    co2Kg,
-    contrailImpactScore,
-    contrailRiskRating,
-    totalImpactScore,
-    reasoning: `${aircraftType} at ${fuelEff} L/100pax-km over ${distanceKm}km = ~${co2Kg}kg CO₂/pax. ${depHour >= 18 || depHour < 6 ? "Night departure amplifies contrail warming." : "Daytime departure partially offsets contrail warming via solar reflection."} ${newGenTypes.includes(aircraftType) ? "New-gen low-soot engines reduce contrail impact ~40%." : "Legacy engines produce higher soot, increasing contrail optical thickness."}${stops > 0 ? ` ${stops} stop(s) add ~${stops * 8}% fuel overhead.` : ""}`,
-  };
+  const localReasoning = `${aircraftType} at ${fuelEff} L/100pax-km over ${distanceKm}km = ~${co2Kg}kg CO₂/pax. ${depHour >= 18 || depHour < 6 ? "Night departure amplifies contrail warming." : "Daytime departure partially offsets contrail warming via solar reflection."} ${newGenTypes.includes(aircraftType) ? "New-gen low-soot engines reduce contrail impact ~40%." : "Legacy engines produce higher soot, increasing contrail optical thickness."}${stops > 0 ? ` ${stops} stop(s) add ~${stops * 8}% fuel overhead.` : ""}`;
 
-  return k2ChatJSON<FlightClimateAssessment>(
-    [
-      {
-        role: "system",
-        content: `You are an aviation climate scientist. Assess the FULL climate impact of a specific flight — both CO₂ emissions and contrail warming — using the reference data below.
+  // Always use local ICAO-based numbers for consistency — K2 only provides reasoning narrative
+  const apiKey = process.env.K2_THINK_API_KEY;
+  let reasoning = localReasoning;
 
-${CO2_SCIENCE}
+  if (apiKey) {
+    try {
+      const k2Result = await k2ChatJSON<{ reasoning: string }>(
+        [
+          {
+            role: "system",
+            content: `You are an aviation climate scientist. Explain the climate impact of a flight in 2-3 concise sentences.
 
 ${CONTRAIL_SCIENCE}
 
 ${AIRCRAFT_REFERENCE}
 
-YOUR TASK:
-1. ESTIMATE CO₂ per passenger:
-   - Look up the aircraft type's fuel efficiency in the reference table
-   - Apply ICAO correction factors (taxi, climb, routing, load factor at 82%)
-   - Cross-check against the distance-based benchmarks
-   - Factor in stops (each adds ~8% for extra climb/descent cycles)
+Focus on: why this aircraft/route/time combination has the impact it does. Mention specific factors (engine soot, time-of-day effect, altitude exposure).
 
-2. SCORE CONTRAIL IMPACT (0-100):
-   - Determine the aircraft's engine generation and soot index from the table
-   - Factor in time of day (night = worst, daytime = partial offset)
-   - Consider route length (longer flights = more time in ice-supersaturated regions)
-   - Short-haul flights spend less time at contrail-forming altitudes (FL300+)
-   - Apply the science: soot × time-of-day × duration × altitude exposure
-
-3. ASSIGN RISK RATING: low (<25), medium (25-60), high (>60)
-
-4. COMPUTE TOTAL IMPACT (0-100): 40% CO₂ (normalized to route benchmarks) + 60% contrail
-
-5. WRITE REASONING: 2-3 sentences explaining the key factors
-
-Think step by step in <think> tags. Then return ONLY valid JSON:
-{"co2Kg": number, "contrailImpactScore": 0-100, "contrailRiskRating": "low"|"medium"|"high", "totalImpactScore": 0-100, "reasoning": "2-3 sentences"}`,
-      },
-      {
-        role: "user",
-        content: `Assess the full climate impact of this flight:
-
-- Airline: ${airline} (${airlineCode})
-- Aircraft: ${aircraftType} (look up in reference table for fuel efficiency and soot index)
-- Route: ${origin} → ${destination} (great-circle distance: ${distanceKm} km, ${isShortHaul ? "short" : distanceKm < 4000 ? "medium" : "long"}-haul)
+Return ONLY valid JSON: {"reasoning": "2-3 sentences"}`,
+          },
+          {
+            role: "user",
+            content: `Explain the climate impact of this flight:
+- Airline: ${airline} (${airlineCode}), Aircraft: ${aircraftType}
+- Route: ${origin} → ${destination} (${distanceKm} km, ${isShortHaul ? "short" : distanceKm < 4000 ? "medium" : "long"}-haul)
 - Duration: ${durationHours.toFixed(1)} hours${stops > 0 ? ` (${stops} stop${stops > 1 ? "s" : ""})` : " (direct)"}
-- Departure: ${departureTimeISO} (${depHour}:00 UTC — ${depHour >= 18 || depHour < 6 ? "NIGHT flight, no solar offset" : depHour >= 6 && depHour < 8 ? "dawn, minimal solar offset" : depHour >= 16 && depHour < 18 ? "dusk, minimal solar offset" : "daytime, partial solar cooling"})
+- Departure: ${depHour}:00 UTC (${depHour >= 18 || depHour < 6 ? "night" : depHour >= 6 && depHour < 8 ? "dawn" : depHour >= 16 && depHour < 18 ? "dusk" : "daytime"})
+- Computed CO₂: ${co2Kg} kg/pax, Contrail score: ${contrailImpactScore}/100 (${contrailRiskRating})`,
+          },
+        ],
+        { reasoning: localReasoning },
+      );
+      if (k2Result.reasoning && k2Result.reasoning.length > 20) {
+        reasoning = k2Result.reasoning;
+      }
+    } catch {
+      // K2 unavailable — local reasoning is fine
+    }
+  }
 
-Estimate CO₂/pax, score contrail impact 0-100, assign risk rating, compute total impact score.`,
-      },
-    ],
-    localFallback,
-  );
+  return {
+    co2Kg,
+    contrailImpactScore,
+    contrailRiskRating,
+    totalImpactScore,
+    reasoning,
+  };
 }
