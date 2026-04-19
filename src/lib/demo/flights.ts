@@ -347,7 +347,11 @@ export function getDemoSimulationResult(numWaypoints: number = 20, isNight: bool
     },
   };
 
-  const efReductionFraction = isNight ? 0.82 : 0.78;
+  // Reduction varies by route: high-risk routes (lots of ISSR) have more to gain from avoidance
+  // Low-risk routes have less room to improve. Range: 45–88%.
+  const routeSeed = routeKey.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const baseReduction = 0.45 + seededRandom(routeSeed + 99) * 0.43;
+  const efReductionFraction = isNight ? Math.min(0.92, baseReduction + 0.06) : baseReduction;
 
   const optimized: ContrailPrediction = {
     ...scaledBaseline,
@@ -366,7 +370,7 @@ export function getDemoSimulationResult(numWaypoints: number = 20, isNight: bool
       meanRfNetWM2: scaledBaseline.summary.meanRfNetWM2 * (1 - efReductionFraction),
       maxContrailLifetimeHours: 0,
     },
-    co2Kg: Math.round(scaledBaseline.co2Kg * 1.015),
+    co2Kg: Math.round(scaledBaseline.co2Kg * (1 + 0.008 + seededRandom(routeSeed + 77) * 0.012)),
   };
 
   const adjustments = scaledBaseline.waypointResults
@@ -386,6 +390,6 @@ export function getDemoSimulationResult(numWaypoints: number = 20, isNight: bool
     efReductionPercent: Math.round(
       (1 - optimized.summary.totalEnergyForcingJ / (scaledBaseline.summary.totalEnergyForcingJ || 1)) * 100
     ),
-    fuelPenaltyPercent: isNight ? 1.8 : 1.5,
+    fuelPenaltyPercent: Math.round((0.8 + seededRandom(routeSeed + 55) * 2.2 + (isNight ? 0.3 : 0)) * 10) / 10,
   };
 }

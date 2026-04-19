@@ -8,6 +8,8 @@ import type { PlaygroundMapHandle } from "@/app/playground/components/Playground
 import { useSimulation } from "@/hooks/use-simulation";
 import type { AircraftType } from "@/lib/types/flight";
 import type { SimulationResult } from "@/lib/types/comparison";
+import { AIRPORT_COORDS } from "@/lib/utils/airports";
+import { greatCircleDistanceKm } from "@/lib/utils/geo";
 
 const PlaygroundMap = dynamic(
   () => import("@/app/playground/components/PlaygroundMap"),
@@ -466,6 +468,8 @@ export default function SimulatePage() {
                 onTabChange={handleTabChange}
                 isLoading={isLoading}
                 isNight={isNight}
+                origin={origin}
+                destination={destination}
                 onSave={handleSave}
                 onViewReport={() => setShowReport(true)}
               />
@@ -538,13 +542,15 @@ function AnimatedNumber({ value, decimals = 0, suffix = "", className = "" }: { 
 /* ===== Simulation Results Panel ===== */
 
 function SimulationResults({
-  result, tab, onTabChange, isLoading, isNight, onSave, onViewReport,
+  result, tab, onTabChange, isLoading, isNight, origin, destination, onSave, onViewReport,
 }: {
   result: SimulationResult;
   tab: "baseline" | "optimized";
   onTabChange: (t: "baseline" | "optimized") => void;
   isLoading?: boolean;
   isNight: boolean;
+  origin: string;
+  destination: string;
   onSave: () => void;
   onViewReport: () => void;
 }) {
@@ -562,12 +568,19 @@ function SimulationResults({
   const optImpact = optimized.co2Kg / 30 + contrailOptRisk * 6;
   const impactReductionPct = baseImpact > 0 ? Math.round(((baseImpact - optImpact) / baseImpact) * 100) : 0;
 
-  // Minutes added estimate: 1% fuel penalty ≈ ~4 min on transatlantic
-  const minutesAdded = Math.max(1, Math.round(result.fuelPenaltyPercent * 4));
+  // Minutes added: fuel penalty % × actual flight duration
+  const oCoords = AIRPORT_COORDS[origin.toUpperCase()];
+  const dCoords = AIRPORT_COORDS[destination.toUpperCase()];
+  const distKm = oCoords && dCoords
+    ? greatCircleDistanceKm(oCoords.latitude, oCoords.longitude, dCoords.latitude, dCoords.longitude)
+    : 8000;
+  const flightDurationMin = distKm / 900 * 60;
+  const minutesAdded = Math.max(1, Math.round(flightDurationMin * result.fuelPenaltyPercent / 100));
 
-  // Cars off road per year avoided (contrail warming reduction)
-  const contrailWarmingAvoided_tco2e = (baseline.co2Kg / 1000) * 1.8 * (contrailReductionPct / 100);
-  const carsAvoided = Math.max(1, Math.round(contrailWarmingAvoided_tco2e / 4.6 * 100));
+  // Cars off road: EF delta in joules → tCO₂e (1 GJ ≈ 0.001 tCO₂e via GWP*) → EPA car/year (4.6 tCO₂e)
+  const efDeltaGJ = (baseline.summary.totalEnergyForcingJ - optimized.summary.totalEnergyForcingJ) / 1e9;
+  const efDelta_tco2e = Math.max(0, efDeltaGJ * 0.001);
+  const carsAvoided = Math.max(1, Math.round(efDelta_tco2e / 4.6));
 
   const adj = result.altitudeAdjustments[0];
 
