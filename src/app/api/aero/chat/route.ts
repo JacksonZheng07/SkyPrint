@@ -2,6 +2,7 @@ import { streamText, convertToModelMessages, UIMessage, stepCountIs } from "ai";
 import { google } from "@ai-sdk/google";
 import { buildAeroSystemPrompt } from "@/lib/ai/aero-system";
 import { aeroTools } from "@/lib/ai/aero-tools";
+import { checkGeminiKey } from "@/lib/ai/key-check";
 import type { AeroPageContext } from "@/lib/types/aero";
 
 export const maxDuration = 30;
@@ -14,14 +15,15 @@ export async function POST(req: Request) {
 
   const systemPrompt = buildAeroSystemPrompt(context ?? { page: "generic" });
 
-  // Check if Gemini API key is available
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return createFallbackResponse(messages, context);
+  const keyStatus = checkGeminiKey();
+  if (!keyStatus.ok) {
+    console.error("[aero/chat] Gemini key missing:", keyStatus.reason);
+    return createFallbackResponse(messages);
   }
 
   try {
     const result = streamText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: aeroTools,
@@ -30,12 +32,12 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
-    console.error("Aero chat error:", error);
-    return createFallbackResponse(messages, context);
+    console.error("[aero/chat] Gemini call failed:", error);
+    return createFallbackResponse(messages);
   }
 }
 
-function createFallbackResponse(messages: UIMessage[], context: AeroPageContext) {
+function createFallbackResponse(messages: UIMessage[]) {
   const lastMessage = messages[messages.length - 1];
   const text =
     lastMessage?.parts

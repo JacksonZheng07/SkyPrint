@@ -110,7 +110,7 @@ export default function ComparePage() {
       <AeroTrigger comparison={comparison} />
 
       <div>
-        <h1 className="text-3xl font-bold">Compare Flights</h1>
+        <h1 className="text-3xl font-bold">Purchase Flights</h1>
         <p className="mt-2 text-muted-foreground">
           Search flights and compare their total climate impact — CO₂ and
           contrail radiative forcing.

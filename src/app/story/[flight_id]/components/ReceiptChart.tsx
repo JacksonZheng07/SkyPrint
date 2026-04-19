@@ -4,7 +4,6 @@ import { useRef, useEffect } from "react";
 import * as Plot from "@observablehq/plot";
 import type { FlightAnalysis } from "../lib/types";
 import { FootnoteRef } from "./FootnoteRef";
-import { toCarsPerYear } from "../lib/conversions";
 
 interface ReceiptChartProps {
   data: FlightAnalysis;

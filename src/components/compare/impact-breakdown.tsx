@@ -14,7 +14,6 @@ export function ImpactBreakdown({
   totalScore,
 }: ImpactBreakdownProps) {
   // Normalize for the stacked bar
-  const maxBar = 100;
   const co2Width = Math.min(40, (co2Kg / 300) * 40); // Normalize CO2 to ~40% max
   const contrailWidth = Math.min(60, contrailScore * 0.6); // Contrail gets up to 60%
 

@@ -13,7 +13,7 @@ export function Footer() {
           </div>
           <nav className="flex gap-4 text-xs text-muted-foreground">
             <Link href="/compare" className="hover:text-foreground">
-              Compare
+              Purchase Flights
             </Link>
             <Link href="/simulate" className="hover:text-foreground">
               Simulate

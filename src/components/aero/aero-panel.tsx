@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Mic, MicOff, Volume2, VolumeX, X, Loader2 } from "lucide-react";
 import type { UIMessage } from "ai";
 import { useAero } from "@/hooks/use-aero";
 import { useAeroVoice } from "@/hooks/use-aero-voice";
+import { useAeroMic } from "@/hooks/use-aero-mic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -16,8 +18,20 @@ interface AeroPanelProps {
 
 export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps) {
   const { ask, messages } = useAero();
-  const { speak, stop, isPlaying } = useAeroVoice();
+  const { speak, stop: stopSpeaking, isPlaying } = useAeroVoice();
   const [input, setInput] = useState("");
+  const [micError, setMicError] = useState<string | null>(null);
+
+  const { isListening, isProcessing, toggle: toggleMic } = useAeroMic({
+    onTranscript: (text) => {
+      setInput("");
+      ask(text);
+    },
+    onError: (err) => {
+      setMicError(err);
+      setTimeout(() => setMicError(null), 3000);
+    },
+  });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,21 +66,26 @@ export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps)
           {lastText && (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-xs"
-              onClick={() => (isPlaying ? stop() : speak(lastText))}
-              title={isPlaying ? "Stop" : "Listen"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => (isPlaying ? stopSpeaking() : speak(lastText))}
+              title={isPlaying ? "Stop audio" : "Listen"}
             >
-              {isPlaying ? "◼" : "🔊"}
+              {isPlaying ? (
+                <VolumeX className="h-3.5 w-3.5" />
+              ) : (
+                <Volume2 className="h-3.5 w-3.5" />
+              )}
             </Button>
           )}
           <Button
             variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-xs"
+            size="icon"
+            className="h-7 w-7"
             onClick={onClose}
+            title="Close"
           >
-            ✕
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
@@ -102,6 +121,23 @@ export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps)
             flight emissions, or anything about your comparison.
           </p>
         )}
+
+        {/* Voice status feedback */}
+        {isListening && (
+          <div className="flex items-center gap-2 text-xs text-red-500">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+            Listening... tap mic to stop
+          </div>
+        )}
+        {isProcessing && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Transcribing...
+          </div>
+        )}
+        {micError && (
+          <p className="text-xs text-destructive">{micError}</p>
+        )}
       </div>
 
       {/* Input */}
@@ -109,18 +145,37 @@ export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps)
         onSubmit={handleSubmit}
         className="flex gap-2 border-t px-4 py-3"
       >
+        {/* Mic toggle */}
+        <Button
+          type="button"
+          variant={isListening ? "destructive" : "outline"}
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={toggleMic}
+          disabled={isStreaming || isProcessing}
+          title={isListening ? "Stop recording" : "Speak to Aero"}
+        >
+          {isProcessing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : isListening ? (
+            <MicOff className="h-3.5 w-3.5" />
+          ) : (
+            <Mic className="h-3.5 w-3.5" />
+          )}
+        </Button>
+
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about contrails..."
+          placeholder={isListening ? "Listening..." : "Ask about contrails..."}
           className="h-8 text-sm"
-          disabled={isStreaming}
+          disabled={isStreaming || isListening || isProcessing}
         />
         <Button
           type="submit"
           size="sm"
           className="h-8"
-          disabled={isStreaming || !input.trim()}
+          disabled={isStreaming || !input.trim() || isListening || isProcessing}
         >
           Ask
         </Button>

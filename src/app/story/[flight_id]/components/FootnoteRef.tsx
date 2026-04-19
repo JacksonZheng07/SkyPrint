@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useFootnotes } from "../lib/footnotes";
 
 interface FootnoteRefProps {
@@ -27,9 +27,8 @@ export function FootnoteRef({ field, source, url }: FootnoteRefProps) {
       title={`${field} — ${source}`}
       tabIndex={0}
       role="doc-noteref"
-      aria-label={`Footnote ${idRef.current}: ${source}`}
+      aria-label={`Footnote: ${source}`}
     >
-      [{idRef.current}]
     </sup>
   );
 }

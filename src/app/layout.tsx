@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "SkyPrint — Clean Aviation Intelligence",
   description:
     "Carbon transparency at every altitude. Compare flights by contrail impact, not just CO2.",
+  icons: {
+    icon: "/planeLogo.png",
+    apple: "/planeLogo.png",
+  },
   openGraph: {
     title: "SkyPrint — Clean Aviation Intelligence",
     description:
@@ -37,11 +41,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AeroProvider>
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="min-h-screen flex-1 pt-14">{children}</main>
           <Footer />
           <AeroOrb />
         </AeroProvider>

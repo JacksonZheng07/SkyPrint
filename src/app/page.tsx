@@ -2,10 +2,10 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="-mt-14 flex flex-1 flex-col">
       {/* Hero — image background with text overlay */}
       <section
-        className="relative flex min-h-[85vh] flex-col justify-center overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative flex min-h-screen flex-col justify-center overflow-hidden bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
         {/* Dark overlay on the left for text readability */}

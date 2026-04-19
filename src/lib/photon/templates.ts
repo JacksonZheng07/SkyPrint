@@ -14,7 +14,7 @@ export function renderTemplate(
     case "post_flight":
       return renderPostFlight(payload);
     case "in_flight":
-      return renderInFlight(payload);
+      return renderInFlight();
     case "long_term_stats":
       return renderLongTermStats(payload);
   }
@@ -54,7 +54,7 @@ function renderPreFlight(payload: PhotonEventPayload): NotificationContent {
   };
 }
 
-function renderInFlight(payload: PhotonEventPayload): NotificationContent {
+function renderInFlight(): NotificationContent {
   return {
     subject: "Live contrail conditions",
     body: "Your aircraft is currently cruising through conditions monitored by SkyPrint. We're tracking contrail formation potential in real-time.",

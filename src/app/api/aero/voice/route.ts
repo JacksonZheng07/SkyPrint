@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { checkElevenLabsKey } from "@/lib/ai/key-check";
 
 let _elevenlabs: ElevenLabsClient | null = null;
 function getElevenLabsClient() {
@@ -12,6 +13,12 @@ function getElevenLabsClient() {
 }
 
 export async function POST(request: NextRequest) {
+  const keyStatus = checkElevenLabsKey();
+  if (!keyStatus.ok) {
+    console.error("[aero/voice] ElevenLabs key missing:", keyStatus.reason);
+    return NextResponse.json({ error: `ElevenLabs unavailable: ${keyStatus.reason}` }, { status: 503 });
+  }
+
   try {
     const { text } = await request.json();
 
@@ -27,6 +34,7 @@ export async function POST(request: NextRequest) {
     const audioStream = await getElevenLabsClient().textToSpeech.stream(voiceId, {
       text,
       modelId: "eleven_multilingual_v2",
+      languageCode: "en",
       outputFormat: "mp3_44100_128",
       voiceSettings: {
         stability: 0.65,
