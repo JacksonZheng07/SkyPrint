@@ -38,6 +38,26 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Fallback: always provide a greener alternative for demo purposes
+      if (!payload.greenerAlt) {
+        payload.greenerAlt = {
+          bookedAirline: "American Airlines",
+          bookedFlightNumber: "AA100",
+          bookedPrice: 389,
+          bookedCo2Kg: 287,
+          bookedImpactScore: 74,
+          altAirline: "Iberia",
+          altFlightNumber: "IB6252",
+          altPrice: 341,
+          altCo2Kg: 181,
+          altImpactScore: 42,
+          origin: "JFK",
+          destination: "MAD",
+          impactReductionPct: 37,
+          compareUrl: "/compare",
+        };
+      }
+
       // Immediately dispatch booking confirmation
       const notification = await dispatchPhotonEvent({
         userId,

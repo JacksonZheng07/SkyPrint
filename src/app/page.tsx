@@ -81,8 +81,10 @@ export default function Home() {
             <p className="font-medium">Meet Aero.</p>
             <p className="text-white/70">Your AI guide to aviation&apos;s real climate impact.</p>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/AeroImage.png" alt="Aero" className="h-14 w-14 rounded-full" />
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-slate-900">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/AeroImage.png" alt="Aero" className="h-full w-full scale-[1.95] translate-y-[4px] object-cover" />
+          </div>
         </div>
       </section>
 
@@ -563,7 +565,7 @@ function StepCard({
   return (
     <motion.div variants={fadeUp} className="flex flex-col items-center text-center">
       <div className="relative mb-4">
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+        <span className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-md">
           {step}
         </span>
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm">
