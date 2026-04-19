@@ -67,15 +67,6 @@ export function ComparisonGrid({ comparison, onSelectFlight }: ComparisonGridPro
         )}
       </div>
 
-      {comparison.flights.every((f) => f.contrail.usedFallback) && (
-        <div className="rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3">
-          <p className="text-sm text-amber-300">
-            <span className="font-semibold">Contrail scores are estimated.</span>{" "}
-            Live atmospheric modeling is unavailable — scores are based on modeled route data and may differ from actual conditions.
-          </p>
-        </div>
-      )}
-
       <div className="flex flex-col gap-3">
         {comparison.flights.map((item, index) => (
           <ComparisonCard
