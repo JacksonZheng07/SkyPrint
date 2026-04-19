@@ -19,11 +19,11 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (origin && destination && date) {
+    if (origin && destination) {
       onSearch({
         origin: origin.toUpperCase(),
         destination: destination.toUpperCase(),
-        date,
+        date: date || new Date().toISOString().split("T")[0],
       });
     }
   }
@@ -76,7 +76,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
           </div>
           <button
             type="submit"
-            disabled={isLoading || !origin || !destination || !date}
+            disabled={isLoading || !origin || !destination}
             className="inline-flex h-10 items-center justify-center rounded-full bg-emerald-600 px-6 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none"
           >
             {isLoading ? "Searching..." : "Search"}

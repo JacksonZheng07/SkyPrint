@@ -6,6 +6,7 @@ import { FlightFilters, type SortKey } from "@/components/compare/flight-filters
 import { ComparisonGrid } from "@/components/compare/comparison-grid";
 import { BookingConfirmation } from "@/components/compare/booking-confirmation";
 import { AeroTrigger } from "@/components/aero/aero-trigger";
+import { FlightPicker, type FlightSelection } from "@/components/shared/flight-picker";
 import { useComparison } from "@/hooks/use-comparison";
 import { useAero } from "@/hooks/use-aero";
 import { usePhoton } from "@/hooks/use-photon";
@@ -118,6 +119,16 @@ export default function ComparePage() {
       </div>
 
       <FlightSearch onSearch={compare} isLoading={isLoading} />
+
+      {!comparison && !isLoading && (
+        <FlightPicker
+          onSelect={(flight: FlightSelection) =>
+            compare({ origin: flight.origin, destination: flight.destination, date: flight.date })
+          }
+          isLoading={isLoading}
+          label="Or pick a recent transatlantic flight to compare"
+        />
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">

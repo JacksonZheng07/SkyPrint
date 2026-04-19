@@ -44,12 +44,13 @@ export function RouteInput({ onSimulate, isLoading }: RouteInputProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (origin && destination && date) {
+    if (origin && destination) {
+      const effectiveDate = date || new Date().toISOString().split("T")[0];
       onSimulate({
         origin: origin.toUpperCase(),
         destination: destination.toUpperCase(),
         aircraftType,
-        departureTime: new Date(`${date}T10:00:00Z`).toISOString(),
+        departureTime: new Date(`${effectiveDate}T10:00:00Z`).toISOString(),
         cruiseAltitudeFt: parseInt(cruiseAlt, 10) || 35000,
       });
     }
@@ -125,7 +126,7 @@ export function RouteInput({ onSimulate, isLoading }: RouteInputProps) {
             </div>
             <Button
               type="submit"
-              disabled={isLoading || !origin || !destination || !date}
+              disabled={isLoading || !origin || !destination}
             >
               {isLoading ? "Simulating..." : "Simulate Route"}
             </Button>
