@@ -13,6 +13,7 @@ const WAYPOINT_COUNT = 120;
 
 export interface PlaygroundMapHandle {
   showRoute: (origin: string, destination: string, date: string, departureHour?: number) => void;
+  showBaselineRoute: (origin: string, destination: string) => void;
   setProgress: (hour: number) => void;
   updateRouteRisk: (probability: number) => void;
   setLayer: (layer: string | null) => void;
@@ -153,7 +154,25 @@ const PlaygroundMap = forwardRef<PlaygroundMapHandle, Props>(function Playground
         },
       });
 
-      // Route line
+      // Baseline route line (dashed, blue)
+      map.addSource("baseline-route", {
+        type: "geojson",
+        data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
+      });
+      map.addLayer({
+        id: "baseline-route-line",
+        type: "line",
+        source: "baseline-route",
+        paint: {
+          "line-width": 2.5,
+          "line-opacity": 0.7,
+          "line-color": "#38bdf8",
+          "line-dasharray": [3, 2],
+        },
+        layout: { "line-cap": "round", "line-join": "round" },
+      });
+
+      // Optimized route line (solid, green)
       map.addSource("route", {
         type: "geojson",
         lineMetrics: true,
@@ -333,6 +352,31 @@ const PlaygroundMap = forwardRef<PlaygroundMapHandle, Props>(function Playground
       }, 1100);
     },
 
+    showBaselineRoute(origin, destination) {
+      const map = mapRef.current;
+      if (!map || !loadedRef.current) return;
+
+      const originCoords = AIRPORT_COORDS[origin];
+      const destCoords   = AIRPORT_COORDS[destination];
+      const oCoord: [number, number] = originCoords ? [originCoords.longitude, originCoords.latitude] : [-73.78, 40.64];
+      const dCoord: [number, number] = destCoords   ? [destCoords.longitude,   destCoords.latitude]   : [-0.45,  51.47];
+
+      const waypoints = interpolateGreatCircle(
+        { latitude: oCoord[1], longitude: oCoord[0] },
+        { latitude: dCoord[1], longitude: dCoord[0] },
+        WAYPOINT_COUNT,
+        35000,
+        new Date().toISOString()
+      );
+      const coords: [number, number][] = waypoints.map((wp) => [wp.longitude, wp.latitude]);
+
+      (map.getSource("baseline-route") as mapboxgl.GeoJSONSource)?.setData({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: coords },
+      });
+    },
+
     setProgress(hour) {
       const map = mapRef.current;
       const route = routeRef.current;
@@ -399,6 +443,9 @@ const PlaygroundMap = forwardRef<PlaygroundMapHandle, Props>(function Playground
       routeRef.current = null;
       setPlaneVisible(map, false);
       (map.getSource("route") as mapboxgl.GeoJSONSource)?.setData(
+        { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } }
+      );
+      (map.getSource("baseline-route") as mapboxgl.GeoJSONSource)?.setData(
         { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } }
       );
       (map.getSource("endpoints") as mapboxgl.GeoJSONSource)?.setData(
