@@ -1,8 +1,12 @@
 {
-  "crons": [
-    {
-      "path": "/api/photon/cron",
-      "schedule": "*/15 * * * *"
+  "experimentalServices": {
+    "frontend": {
+      "routePrefix": "/",
+      "framework": "nextjs"
+    },
+    "contrail_engine": {
+      "entrypoint": "services/contrail_engine",
+      "routePrefix": "/_/contrail_engine"
     }
-  ]
+  }
 }
