@@ -50,70 +50,73 @@ export function useMapAnimation() {
       let stepCounter = 0;
 
       const step = () => {
-        const { frameIndex } = stateRef.current;
-        if (frameIndex >= coords.length) {
-          stateRef.current.animating = false;
-          // Final camera ease to destination
-          map.easeTo({
-            center: coords[coords.length - 1],
-            zoom: 7,
-            duration: 1500,
-          });
-          onComplete?.();
-          return;
-        }
+        // Map can be torn down mid-animation (e.g., React StrictMode double-mount
+        // in dev or navigation away). Any map.* call after remove() throws.
+        try {
+          const { frameIndex } = stateRef.current;
+          if (frameIndex >= coords.length) {
+            stateRef.current.animating = false;
+            map.easeTo({
+              center: coords[coords.length - 1],
+              zoom: 7,
+              duration: 1500,
+            });
+            onComplete?.();
+            return;
+          }
 
-        stepCounter++;
-        if (stepCounter % framesPerStep !== 0 && frameIndex > 0) {
+          stepCounter++;
+          if (stepCounter % framesPerStep !== 0 && frameIndex > 0) {
+            stateRef.current.rafId = requestAnimationFrame(step);
+            return;
+          }
+
+          const source = map.getSource("track-actual") as mapboxgl.GeoJSONSource | undefined;
+          if (source) {
+            source.setData({
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: coords.slice(0, frameIndex + 1),
+              },
+            });
+          }
+
+          const aircraftSource = map.getSource("aircraft-position") as mapboxgl.GeoJSONSource | undefined;
+          if (aircraftSource) {
+            const current = coords[frameIndex];
+            const prev = frameIndex > 0 ? coords[frameIndex - 1] : current;
+            const bearing = getBearing(prev, current);
+            aircraftSource.setData({
+              type: "Feature",
+              properties: { bearing },
+              geometry: {
+                type: "Point",
+                coordinates: current,
+              },
+            });
+          }
+
+          if (frameIndex % 3 === 0) {
+            const zoomProgress = frameIndex / coords.length;
+            const zoom = zoomProgress < 0.1 ? 6
+              : zoomProgress > 0.9 ? 6
+              : 4;
+            map.easeTo({
+              center: coords[frameIndex],
+              zoom,
+              duration: 300,
+              easing: (t) => t,
+            });
+          }
+
+          stateRef.current.frameIndex = frameIndex + 1;
           stateRef.current.rafId = requestAnimationFrame(step);
-          return;
+        } catch {
+          stateRef.current.animating = false;
+          stateRef.current.rafId = null;
         }
-
-        // Update track line with growing coordinates
-        const source = map.getSource("track-actual") as mapboxgl.GeoJSONSource | undefined;
-        if (source) {
-          source.setData({
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: coords.slice(0, frameIndex + 1),
-            },
-          });
-        }
-
-        // Update aircraft position marker
-        const aircraftSource = map.getSource("aircraft-position") as mapboxgl.GeoJSONSource | undefined;
-        if (aircraftSource) {
-          const current = coords[frameIndex];
-          const prev = frameIndex > 0 ? coords[frameIndex - 1] : current;
-          const bearing = getBearing(prev, current);
-          aircraftSource.setData({
-            type: "Feature",
-            properties: { bearing },
-            geometry: {
-              type: "Point",
-              coordinates: current,
-            },
-          });
-        }
-
-        // Follow camera — smooth ease every few frames
-        if (frameIndex % 3 === 0) {
-          const zoomProgress = frameIndex / coords.length;
-          const zoom = zoomProgress < 0.1 ? 6
-            : zoomProgress > 0.9 ? 6
-            : 4;
-          map.easeTo({
-            center: coords[frameIndex],
-            zoom,
-            duration: 300,
-            easing: (t) => t,
-          });
-        }
-
-        stateRef.current.frameIndex = frameIndex + 1;
-        stateRef.current.rafId = requestAnimationFrame(step);
       };
 
       // Begin after initial camera move

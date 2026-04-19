@@ -24,15 +24,38 @@ export default function StoryPage({ flightId }: StoryPageProps) {
     useState<GeoJSON.FeatureCollection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cfToggleOn, setCfToggleOn] = useState(false);
+  const [exploreMode, setExploreMode] = useState(false);
 
   const mapRef = useRef<FlightMapHandle>(null);
-  const { activeScene, progress, direction } = useScrollama();
+  const { activeScene, progress, direction } = useScrollama(!loading && !!data);
   const { animateTrack, stopAnimation } = useMapAnimation();
 
   const animatedRef = useRef(false);
   const issrShownRef = useRef(false);
   const counterfactualShownRef = useRef(false);
+  const counterfactualPreloadedRef = useRef(false);
   const prevSceneRef = useRef<SceneName>("flight");
+  const activeSceneRef = useRef<SceneName>("flight");
+  const exploreFirstRunRef = useRef(true);
+
+  // Track activeScene in a ref so the explore-mode effect can read it without re-subscribing
+  useEffect(() => {
+    activeSceneRef.current = activeScene;
+  }, [activeScene]);
+
+  // On exit from explore mode, restore scene-driven camera + layers
+  useEffect(() => {
+    if (exploreFirstRunRef.current) {
+      exploreFirstRunRef.current = false;
+      return;
+    }
+    if (!exploreMode) {
+      mapRef.current?.updateForScene(activeSceneRef.current);
+      // Let scrollama recompute positions after the overlay comes back
+      window.dispatchEvent(new Event("resize"));
+    }
+  }, [exploreMode]);
 
   // --- Data loading ---
   useEffect(() => {
@@ -68,8 +91,20 @@ export default function StoryPage({ flightId }: StoryPageProps) {
       if (!data || !mapRef.current) return;
       const handle = mapRef.current;
 
+      // Preload counterfactual once so the manual toggle works before scene 4
+      if (
+        !counterfactualPreloadedRef.current &&
+        data.track_counterfactual?.length
+      ) {
+        counterfactualPreloadedRef.current = true;
+        handle.preloadCounterfactual(data.track_counterfactual);
+      }
+
       // Update map state for scene
       handle.updateForScene(scene);
+
+      // Sync button label with scene-driven visibility
+      setCfToggleOn(scene === "counterfactual");
 
       if (scene === "flight" && !animatedRef.current) {
         animatedRef.current = true;
@@ -141,6 +176,26 @@ export default function StoryPage({ flightId }: StoryPageProps) {
     <ErrorBoundary flightId={flightId}>
       <FootnoteProvider>
         <div className="relative bg-zinc-950 text-white min-h-screen">
+          {/* Floating map controls (below the app header at z-40) */}
+          <div className="fixed top-20 right-4 z-50 flex gap-2">
+            <button
+              onClick={() => setExploreMode((v) => !v)}
+              className="px-3 py-1.5 text-xs font-medium bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded text-white backdrop-blur-sm transition-colors"
+            >
+              {exploreMode ? "Exit explore" : "Explore globe"}
+            </button>
+            <button
+              onClick={() => {
+                const next = !cfToggleOn;
+                mapRef.current?.setCounterfactualVisible(next);
+                setCfToggleOn(next);
+              }}
+              className="px-3 py-1.5 text-xs font-medium bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded text-white backdrop-blur-sm transition-colors"
+            >
+              {cfToggleOn ? "Hide" : "Show"} alternative route
+            </button>
+          </div>
+
           {/* Sticky map background */}
           <div
             className={`sticky top-0 h-screen w-full transition-opacity duration-700 ${mapOpacity}`}
@@ -149,7 +204,10 @@ export default function StoryPage({ flightId }: StoryPageProps) {
           </div>
 
           {/* Scrolling text overlay */}
-          <div className="relative z-10 -mt-[100vh]">
+          <div
+            className="relative z-10 -mt-[100vh]"
+            style={exploreMode ? { display: "none" } : undefined}
+          >
             {/* Scene 1: The Flight */}
             <section
               className="scene-waypoint min-h-screen flex items-end pb-24 px-6 sm:px-12"

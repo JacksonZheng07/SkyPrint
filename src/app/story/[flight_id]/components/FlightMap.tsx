@@ -22,6 +22,8 @@ export interface FlightMapHandle {
   showISSR: (geojson: GeoJSON.FeatureCollection) => void;
   /** Show the counterfactual track */
   showCounterfactual: (track: TrackPoint[]) => void;
+  /** Load counterfactual data into the source without changing visibility */
+  preloadCounterfactual: (track: TrackPoint[]) => void;
   /** Toggle between actual and counterfactual */
   setCounterfactualVisible: (visible: boolean) => void;
   /** Update map layout for scene transitions */
@@ -154,6 +156,59 @@ const FlightMap = forwardRef<FlightMapHandle, FlightMapProps>(
             "circle-opacity": 1,
           },
         });
+
+        // --- Hover popups ---
+        const popup = new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 12,
+        });
+
+        map.on("mousemove", "track-actual-issr-line", (e) => {
+          if (!e.features?.[0]) return;
+          map.getCanvas().style.cursor = "pointer";
+          const p = e.features[0].properties as {
+            avg_alt_ft?: number;
+            total_forcing_j_m?: number;
+          } | null;
+          popup
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family:system-ui,sans-serif;font-size:12px;color:#111;min-width:180px;">
+                <div style="color:${COLOR_TRACK_ISSR};font-weight:600;margin-bottom:4px;">Contrail-forming region</div>
+                <div>Altitude: ${p?.avg_alt_ft ?? "—"} ft</div>
+                <div>Forcing: ${p?.total_forcing_j_m ?? "—"} J/m</div>
+              </div>`
+            )
+            .addTo(map);
+        });
+        map.on("mouseleave", "track-actual-issr-line", () => {
+          map.getCanvas().style.cursor = "";
+          popup.remove();
+        });
+
+        map.on("mousemove", "track-counterfactual-line", (e) => {
+          if (!e.features?.[0]) return;
+          map.getCanvas().style.cursor = "pointer";
+          const p = e.features[0].properties as {
+            min_alt_ft?: number;
+            max_alt_ft?: number;
+          } | null;
+          popup
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family:system-ui,sans-serif;font-size:12px;color:#111;min-width:180px;">
+                <div style="color:#008876;font-weight:600;margin-bottom:4px;">Alternative route</div>
+                <div>Altitude: ${p?.min_alt_ft ?? "—"}–${p?.max_alt_ft ?? "—"} ft</div>
+                <div style="color:#555;">Avoids ISSR conditions</div>
+              </div>`
+            )
+            .addTo(map);
+        });
+        map.on("mouseleave", "track-counterfactual-line", () => {
+          map.getCanvas().style.cursor = "";
+          popup.remove();
+        });
       });
 
       mapRef.current = map;
@@ -180,30 +235,39 @@ const FlightMap = forwardRef<FlightMapHandle, FlightMapProps>(
           geometry: { type: "LineString", coordinates: coords },
         });
 
-        // Build ISSR segments as separate line features
+        // Build ISSR segments as separate line features with summary properties
         const issrFeatures: GeoJSON.Feature[] = [];
-        let currentSegment: [number, number][] = [];
-        for (let i = 0; i < track.length; i++) {
-          if (track[i].in_issr) {
-            currentSegment.push([track[i].lon, track[i].lat]);
-          } else if (currentSegment.length > 1) {
+        let segCoords: [number, number][] = [];
+        let segPoints: TrackPoint[] = [];
+        const flushSegment = () => {
+          if (segCoords.length > 1) {
+            const avgAlt = Math.round(
+              segPoints.reduce((s, p) => s + p.alt_ft, 0) / segPoints.length
+            );
+            const totalForcing = Math.round(
+              segPoints.reduce((s, p) => s + (p.segment_forcing_j_m || 0), 0)
+            );
             issrFeatures.push({
               type: "Feature",
-              properties: {},
-              geometry: { type: "LineString", coordinates: currentSegment },
+              properties: {
+                avg_alt_ft: avgAlt,
+                total_forcing_j_m: totalForcing,
+              },
+              geometry: { type: "LineString", coordinates: segCoords },
             });
-            currentSegment = [];
+          }
+          segCoords = [];
+          segPoints = [];
+        };
+        for (let i = 0; i < track.length; i++) {
+          if (track[i].in_issr) {
+            segCoords.push([track[i].lon, track[i].lat]);
+            segPoints.push(track[i]);
           } else {
-            currentSegment = [];
+            flushSegment();
           }
         }
-        if (currentSegment.length > 1) {
-          issrFeatures.push({
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: currentSegment },
-          });
-        }
+        flushSegment();
 
         const issrSource = map.getSource("track-actual-issr") as mapboxgl.GeoJSONSource;
         issrSource?.setData({ type: "FeatureCollection", features: issrFeatures });
@@ -235,10 +299,14 @@ const FlightMap = forwardRef<FlightMapHandle, FlightMapProps>(
         if (!map || !loadedRef.current) return;
 
         const coords = track.map((p) => [p.lon, p.lat] as [number, number]);
+        const alts = track.map((p) => p.alt_ft);
         const source = map.getSource("track-counterfactual") as mapboxgl.GeoJSONSource;
         source?.setData({
           type: "Feature",
-          properties: {},
+          properties: {
+            min_alt_ft: alts.length ? Math.min(...alts) : 0,
+            max_alt_ft: alts.length ? Math.max(...alts) : 0,
+          },
           geometry: { type: "LineString", coordinates: coords },
         });
         map.setLayoutProperty("track-counterfactual-line", "visibility", "visible");
@@ -246,6 +314,23 @@ const FlightMap = forwardRef<FlightMapHandle, FlightMapProps>(
         // Dim the actual track
         map.setPaintProperty("track-actual-line", "line-opacity", 0.3);
         map.setPaintProperty("track-actual-issr-line", "line-opacity", 0.3);
+      },
+
+      preloadCounterfactual: (track: TrackPoint[]) => {
+        const map = mapRef.current;
+        if (!map || !loadedRef.current) return;
+        const coords = track.map((p) => [p.lon, p.lat] as [number, number]);
+        const alts = track.map((p) => p.alt_ft);
+        const source = map.getSource("track-counterfactual") as mapboxgl.GeoJSONSource;
+        source?.setData({
+          type: "Feature",
+          properties: {
+            min_alt_ft: alts.length ? Math.min(...alts) : 0,
+            max_alt_ft: alts.length ? Math.max(...alts) : 0,
+          },
+          geometry: { type: "LineString", coordinates: coords },
+        });
+        // Do NOT change visibility or opacity — caller controls
       },
 
       setCounterfactualVisible: (visible: boolean) => {

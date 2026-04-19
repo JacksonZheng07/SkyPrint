@@ -39,7 +39,13 @@ export function FootnoteProvider({ children }: { children: ReactNode }) {
       counterRef.current += 1;
       const id = counterRef.current;
       registryRef.current.set(field, id);
-      setFootnotes((prev) => [...prev, { id, field, source, url }]);
+      // Defer state update out of render phase so FootnoteRef can call this
+      // during its render without triggering React's setState-in-render warning.
+      queueMicrotask(() => {
+        setFootnotes((prev) =>
+          prev.some((f) => f.id === id) ? prev : [...prev, { id, field, source, url }]
+        );
+      });
       return id;
     },
     []

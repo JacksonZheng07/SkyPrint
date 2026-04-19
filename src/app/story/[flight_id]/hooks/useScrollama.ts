@@ -24,7 +24,7 @@ interface ScrollamaState {
   direction: "up" | "down";
 }
 
-export function useScrollama() {
+export function useScrollama(ready: boolean = true) {
   const [state, setState] = useState<ScrollamaState>({
     activeScene: "flight",
     progress: 0,
@@ -64,6 +64,7 @@ export function useScrollama() {
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     init();
     const handleResize = () => scrollerRef.current?.resize();
     window.addEventListener("resize", handleResize);
@@ -71,7 +72,7 @@ export function useScrollama() {
       scrollerRef.current?.destroy();
       window.removeEventListener("resize", handleResize);
     };
-  }, [init]);
+  }, [init, ready]);
 
   return state;
 }

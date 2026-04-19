@@ -44,3 +44,30 @@ class OptimizeResponse(BaseModel):
     optimized: PredictResponse
     altitude_adjustments: list[AltitudeAdjustment]
     ef_reduction_percent: float
+
+
+class RouteGeometryPoint(BaseModel):
+    time_unix: int
+    latitude: float
+    longitude: float
+    altitude_ft: float
+    contrail_risk: bool
+
+
+class RouteHistoryResponse(BaseModel):
+    flight_id: str
+    callsign: str
+    icao24: str
+    aircraft_type: str
+    original_path: list[RouteGeometryPoint]
+    optimal_path: list[RouteGeometryPoint]
+    co2_kg_original: float
+    co2_kg_optimal: float
+    co2_kg_delta: float        # positive = optimal uses slightly more fuel
+    n_contrail_waypoints: int
+    n_total_waypoints: int
+    fuel_penalty_pct: float    # estimated; ≤ 2 % by construction
+    ef_reduction_pct: float    # fraction of cruise contrail waypoints eliminated
+    avoidable: bool
+    used_sac_fallback: bool
+    altitude_adjustments: list[dict]

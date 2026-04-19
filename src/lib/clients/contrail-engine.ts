@@ -1,6 +1,11 @@
 import type { Waypoint } from "@/lib/types/flight";
 import type { ContrailPrediction } from "@/lib/types/contrail";
 import type { AltitudeAdjustment } from "@/lib/types/comparison";
+import type {
+  RouteHistoryRequest,
+  RouteHistoryResponse,
+  RouteGeometryPoint,
+} from "@/lib/types/route-geometry";
 
 const ENGINE_URL = process.env.CONTRAIL_ENGINE_URL ?? "http://localhost:8000";
 const API_KEY = process.env.CONTRAIL_ENGINE_API_KEY;
@@ -118,6 +123,48 @@ export async function optimizeAltitude(
       })
     ),
     efReductionPercent: data.ef_reduction_percent,
+  };
+}
+
+export async function getHistoricalRouteGeometry(
+  params: RouteHistoryRequest
+): Promise<RouteHistoryResponse> {
+  const response = await engineFetch("/route-history", {
+    callsign: params.callsign,
+    icao24: params.icao24,
+    departure_time_unix: params.departureTimeUnix,
+    aircraft_type: params.aircraftType,
+  });
+
+  const data = await response.json();
+
+  function toGeoPoint(p: Record<string, unknown>): RouteGeometryPoint {
+    return {
+      timeUnix: p.time_unix as number,
+      latitude: p.latitude as number,
+      longitude: p.longitude as number,
+      altitudeFt: p.altitude_ft as number,
+      contrailRisk: p.contrail_risk as boolean,
+    };
+  }
+
+  return {
+    flightId: data.flight_id,
+    callsign: data.callsign,
+    icao24: data.icao24,
+    aircraftType: data.aircraft_type,
+    originalPath: (data.original_path as Record<string, unknown>[]).map(toGeoPoint),
+    optimalPath: (data.optimal_path as Record<string, unknown>[]).map(toGeoPoint),
+    co2KgOriginal: data.co2_kg_original,
+    co2KgOptimal: data.co2_kg_optimal,
+    co2KgDelta: data.co2_kg_delta,
+    nContrailWaypoints: data.n_contrail_waypoints,
+    nTotalWaypoints: data.n_total_waypoints,
+    fuelPenaltyPct: data.fuel_penalty_pct,
+    efReductionPct: data.ef_reduction_pct,
+    avoidable: data.avoidable,
+    usedSacFallback: data.used_sac_fallback,
+    altitudeAdjustments: data.altitude_adjustments,
   };
 }
 

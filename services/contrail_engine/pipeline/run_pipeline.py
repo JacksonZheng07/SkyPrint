@@ -145,16 +145,58 @@ def run_pipeline(
     logger.info("STEP 2: Fetching ADS-B tracks (%d flights)", len(entries))
     logger.info("=" * 60)
 
+    tracks_cache_dir = output_dir / "tracks_cache"
+    tracks_cache_dir.mkdir(parents=True, exist_ok=True)
+
     flights_with_types: list[tuple[Any, str]] = []
+    rate_limited = 0
     for entry in entries:
-        track = client.get_track(entry.icao24, entry.first_seen)
-        if track is None or len(track.path) < 10:
-            logger.warning("No track for %s (icao24=%s)", entry.callsign, entry.icao24)
+        cache_file = tracks_cache_dir / f"{entry.icao24}_{entry.first_seen}.json"
+
+        if cache_file.exists():
+            # Load from disk — no API call needed
+            import json as _json
+            raw = _json.loads(cache_file.read_text())
+            from pipeline.opensky_client import FlightTrack, TrackPoint
+            track = FlightTrack(
+                icao24=raw["icao24"],
+                callsign=raw["callsign"],
+                start_time=raw["start_time"],
+                end_time=raw["end_time"],
+                path=[TrackPoint(**p) for p in raw["path"]],
+            )
+            logger.debug("Track cache hit: %s", entry.callsign)
+        else:
+            track = client.get_track(entry.icao24, entry.first_seen)
+            if track is None:
+                rate_limited += 1
+                logger.warning("No track for %s (icao24=%s)", entry.callsign, entry.icao24)
+                continue
+            # Persist to disk so re-runs skip this API call
+            import json as _json
+            cache_file.write_text(_json.dumps({
+                "icao24": track.icao24,
+                "callsign": track.callsign,
+                "start_time": track.start_time,
+                "end_time": track.end_time,
+                "path": [
+                    {
+                        "time": p.time,
+                        "latitude": p.latitude,
+                        "longitude": p.longitude,
+                        "baro_altitude_m": p.baro_altitude_m,
+                        "heading": p.heading,
+                        "on_ground": p.on_ground,
+                    }
+                    for p in track.path
+                ],
+            }))
+
+        if len(track.path) < 10:
+            logger.warning("Track too short for %s (%d pts)", entry.callsign, len(track.path))
             continue
 
-        # Aircraft type: use manifest entry if available, else default to B77W
         atype = entry.aircraft_type or "B77W"
-
         flight = opensky_track_to_flight(
             icao24=entry.icao24,
             callsign=entry.callsign,
@@ -164,6 +206,12 @@ def run_pipeline(
         if flight is not None:
             flights_with_types.append((flight, atype))
 
+    if rate_limited:
+        logger.warning(
+            "%d/%d tracks skipped due to rate limiting. "
+            "Re-run tomorrow — cached tracks will not be re-fetched.",
+            rate_limited, len(entries),
+        )
     logger.info("Tracks retrieved: %d/%d", len(flights_with_types), len(entries))
 
     if not flights_with_types:

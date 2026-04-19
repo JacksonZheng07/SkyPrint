@@ -39,6 +39,12 @@ export default function Home() {
               >
                 Explore Airlines
               </Link>
+              <Link
+                href="/story/BAW117_2026-04-10"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-8 font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+              >
+                Explore a Flight
+              </Link>
             </div>
           </div>
         </div>

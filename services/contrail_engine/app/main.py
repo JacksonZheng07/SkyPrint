@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import compare, health, optimize, predict
+from app.routers import compare, health, optimize, predict, route_history
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
@@ -39,3 +39,4 @@ app.include_router(health.router)
 app.include_router(predict.router)
 app.include_router(compare.router)
 app.include_router(optimize.router)
+app.include_router(route_history.router)
