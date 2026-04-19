@@ -1,385 +1,245 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { motion } from "framer-motion";
+import { PodiumCard } from "@/components/airline/podium-card";
+import { RankingRow } from "@/components/airline/ranking-row";
 import type { AirlineScore } from "@/lib/types/airline";
-import {
-  CATEGORY_ORDER,
-  CATEGORY_META,
-} from "@/lib/utils/airline-categories";
-import {
-  GRADE_STYLES,
-  scoreToPlusMinusGrade,
-  pmGradeBaseGrade,
-  pmGradeLabel,
-  pmGradeBg,
-  pmGradeLabelColor,
-  percentileLabel,
-} from "@/lib/utils/grades";
-import { AirlineLogo } from "@/components/compare/airline-logo";
+import { CATEGORY_ORDER, CATEGORY_META } from "@/lib/utils/airline-categories";
 
-const ITEMS_PER_PAGE = 10;
+const PANEL = {
+  background: "linear-gradient(135deg, rgba(12,24,50,0.84) 0%, rgba(5,12,28,0.92) 100%)",
+  backdropFilter: "blur(18px)",
+  boxShadow: [
+    "0 0 0 1px rgba(45,212,191,0.18)",
+    "0 0 40px rgba(45,212,191,0.10)",
+    "0 12px 40px rgba(0,0,0,0.50)",
+    "inset 0 1px 0 rgba(255,255,255,0.09)",
+    "inset 1px 0 0 rgba(45,212,191,0.07)",
+  ].join(", "),
+} as const;
+
+const CATEGORY_MAX: Record<string, number> = {
+  contrailMitigation: 30,
+  fleetEfficiency: 25,
+  routeOptimization: 25,
+  sustainableFuel: 20,
+};
 
 export default function AirlinesPage() {
   const [scores, setScores] = useState<AirlineScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState<AirlineScore | null>(null);
 
   useEffect(() => {
     fetch("/api/rankings")
       .then((r) => r.json())
-      .then((data: AirlineScore[]) => {
-        setScores(data);
-        if (data.length > 0) setSelected(data[0]);
-      })
+      .then(setScores)
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
 
-  const sorted = [...scores].sort((a, b) => b.overallScore - a.overallScore);
-  const [page, setPage] = useState(1);
-  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
-  const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-  const selectedRank = selected ? sorted.findIndex((s) => s.airlineCode === selected.airlineCode) + 1 : 0;
-
   return (
     <div
-      className="relative -mt-14 min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: "url('/AirlinePhoto.png')" }}
+      className="relative min-h-screen text-white"
+      style={{
+        backgroundImage: "url('/airlines-bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat",
+      }}
     >
-      <div className="absolute inset-0 bg-black/65" />
+      {/* Dark overlay */}
+      <div
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(4,10,22,0.72) 0%, rgba(4,10,22,0.60) 40%, rgba(4,10,22,0.74) 100%)",
+        }}
+      />
+      <div className="relative mx-auto max-w-6xl space-y-3 px-4 pb-16 pt-24">
 
-      <div className="relative z-10 mx-auto max-w-[1400px] px-4 pb-16 pt-24 sm:px-8">
-        {isLoading ? (
-          <LoadingState />
-        ) : (
-          <>
-            {/* Header row */}
-            <motion.div
-              className="flex items-start justify-between"
-              initial={{ opacity: 0, y: -16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid gap-3 md:grid-cols-2"
+        >
+          {/* Left: title */}
+          <div className="flex flex-col justify-center">
+            <div
+              className="mb-4 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-teal-300"
+              style={{ background: "rgba(45,212,191,0.12)", border: "1px solid rgba(45,212,191,0.25)" }}
             >
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-4xl font-bold tracking-tight text-white">Airlines Report Card</h1>
-                  <span className="rounded-md bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
-                    Q2 2025
-                  </span>
-                </div>
-                <p className="mt-1.5 text-sm text-white/45">
-                  Grading airlines on climate impact performance<br />across key categories.
-                </p>
-              </div>
+              <span>✈</span> Climate Intelligence
+            </div>
+            <h1 className="text-5xl font-bold leading-tight tracking-tight text-white">
+              Airline Climate
+              <br />
+              <span
+                style={{
+                  background: "linear-gradient(90deg,#2dd4bf,#34d399)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Rankings
+              </span>
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-white/60">
+              Who&apos;s leading the charge for cleaner skies? Rankings based on fleet efficiency,
+              route optimization, contrail mitigation, and sustainable fuel adoption.
+            </p>
+          </div>
 
-              {/* Mission card */}
-              <div className="hidden lg:block max-w-[280px] rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 backdrop-blur-xl">
-                <p className="text-xs leading-relaxed text-white/55">
-                  Our mission is to drive transparency and better decisions for a cleaner future of aviation.
-                </p>
-                <Link href="/mission" className="mt-2 inline-block text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
-                  Learn more &rarr;
-                </Link>
-              </div>
-            </motion.div>
-
-            {/* Two-panel layout */}
-            <motion.div
-              className="mt-6 grid gap-6 lg:grid-cols-[1fr_440px]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-            >
-              {/* ── Left: Grades table ── */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
-                <div className="mb-1">
-                  <h2 className="text-base font-semibold text-white">Overall Grades</h2>
-                  <p className="text-[11px] text-white/30">Grades reflect total climate impact performance</p>
-                </div>
-
-                {/* Table header */}
-                <div className="mt-4 grid grid-cols-[40px_36px_1fr_80px_100px_70px] items-center gap-3 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/25">
-                  <span>Rank</span>
-                  <span></span>
-                  <span>Airline</span>
-                  <span className="text-center">Overall Grade</span>
-                  <span />
-                  <span className="text-center text-[9px]">Trend<br/>(vs last quarter)</span>
-                </div>
-
-                {/* Rows */}
-                <div className="mt-2 space-y-1">
-                  <AnimatePresence mode="popLayout">
-                    {paginated.map((airline, i) => {
-                      const globalIdx = (page - 1) * ITEMS_PER_PAGE + i;
-                      const pmGrade = scoreToPlusMinusGrade(airline.overallScore);
-                      const isSelected = selected?.airlineCode === airline.airlineCode;
-                      const base = pmGradeBaseGrade(pmGrade);
-                      const style = GRADE_STYLES[base];
-
-                      // Deterministic pseudo-trend
-                      const seed = airline.airlineCode.charCodeAt(0) * 7 + airline.airlineCode.charCodeAt(1) * 3;
-                      const trendVal = ((seed % 7) - 3); // -3 to +3
-                      const trendIcon = trendVal > 0 ? "↑" : trendVal < 0 ? "↓" : "—";
-                      const trendColor = trendVal > 0 ? "text-emerald-400" : trendVal < 0 ? "text-red-400" : "text-white/30";
-
-                      return (
-                        <motion.button
-                          key={airline.airlineCode}
-                          layout
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 8 }}
-                          transition={{ duration: 0.3, delay: i * 0.02, ease: [0.25, 0.1, 0.25, 1] }}
-                          onClick={() => setSelected(airline)}
-                          className={`grid w-full grid-cols-[40px_36px_1fr_80px_100px_70px] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-all ${
-                            isSelected
-                              ? `border ${style.border} bg-white/[0.06]`
-                              : "border border-transparent hover:bg-white/[0.04]"
-                          }`}
-                        >
-                          <span className="text-base font-bold text-white/40">{globalIdx + 1}</span>
-
-                          <AirlineLogo code={airline.airlineCode} size={28} />
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">{airline.airlineName}</p>
-                          </div>
-
-                          {/* Grade badge */}
-                          <div className="flex justify-center">
-                            <div className={`flex h-9 w-12 items-center justify-center rounded-lg bg-gradient-to-br ${pmGradeBg(pmGrade)} text-sm font-black text-white shadow-sm`}>
-                              {pmGrade}
-                            </div>
-                          </div>
-
-                          {/* Label */}
-                          <span className={`text-xs font-medium ${pmGradeLabelColor(pmGrade)}`}>
-                            {pmGradeLabel(pmGrade)}
-                          </span>
-
-                          {/* Trend */}
-                          <div className={`flex items-center justify-center gap-1 text-xs font-medium ${trendColor}`}>
-                            <span>{trendIcon}</span>
-                            <span>{Math.abs(trendVal)}</span>
-                          </div>
-                        </motion.button>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
-
-                {/* Footer */}
-                <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
-                  <p className="text-[11px] text-white/15">Last updated: April 19, 2025</p>
-                  <div className="flex items-center gap-3">
-                    <button className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] font-medium text-white/40 hover:text-white/70 transition-colors">
-                      View Full Methodology
-                    </button>
-                    {totalPages > 1 && (
-                      <Pagination page={page} totalPages={totalPages} setPage={setPage} />
-                    )}
+          {/* Right: feature badges */}
+          <div className="rounded-2xl border border-teal-400/20 p-5" style={PANEL}>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-teal-400/70">
+              Methodology
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: "📉", title: "Lower Impact", sub: "Better Rank" },
+                { icon: "🔬", title: "Comprehensive", sub: "Methodology" },
+                { icon: "🔄", title: "Updated", sub: "Monthly" },
+                { icon: "🔓", title: "Transparent", sub: "& Open" },
+              ].map((b) => (
+                <div
+                  key={b.title}
+                  className="flex items-center gap-3 rounded-xl p-3"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <span className="text-2xl">{b.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{b.title}</p>
+                    <p className="text-xs text-white/45">{b.sub}</p>
                   </div>
                 </div>
-              </div>
-
-              {/* ── Right: Report card sidebar ── */}
-              <AnimatePresence mode="wait">
-                {selected && (
-                  <motion.div
-                    key={selected.airlineCode}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl"
-                  >
-                    <ReportCard airline={selected} rank={selectedRank} totalAirlines={sorted.length} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* ── Footer ── */}
-            <motion.div
-              className="mt-8 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-5 backdrop-blur-xl"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, duration: 0.5 }}
-            >
-              <div>
-                <p className="text-sm font-semibold text-white">Driving better skies together.</p>
-                <p className="text-xs text-white/30">Support airlines that lead in climate performance.</p>
-              </div>
-              <Link
-                href="/compare"
-                className="rounded-lg bg-white/10 px-5 py-2.5 text-xs font-medium text-white transition-colors hover:bg-white/15"
-              >
-                Compare Airlines
-              </Link>
-            </motion.div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═════════════════════════════════════════════════════════════════════════
-   REPORT CARD SIDEBAR
-   ═════════════════════════════════════════════════════════════════════════ */
-
-function ReportCard({ airline, rank, totalAirlines }: { airline: AirlineScore; rank: number; totalAirlines: number }) {
-  const pmGrade = scoreToPlusMinusGrade(airline.overallScore);
-  const base = pmGradeBaseGrade(pmGrade);
-
-  return (
-    <div className="space-y-6">
-      {/* Header: name + big grade + rank */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <AirlineLogo code={airline.airlineCode} size={40} />
-            <h2 className="text-xl font-bold text-white">{airline.airlineName}</h2>
-          </div>
-          <p className="mt-0.5 text-[11px] text-white/30">Overall Grade</p>
-          <div className="mt-2 flex items-center gap-3">
-            <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${pmGradeBg(pmGrade)} text-2xl font-black text-white shadow-lg`}>
-              {pmGrade}
+              ))}
             </div>
+          </div>
+        </motion.div>
+
+        {/* Podium + Scoring Breakdown */}
+        {isLoading ? (
+          <LoadingState />
+        ) : scores.length >= 3 ? (
+          <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
+            {/* Podium */}
             <div>
-              <p className={`text-sm font-semibold ${pmGradeLabelColor(pmGrade)}`}>{pmGradeLabel(pmGrade)}</p>
-              <p className="text-xs text-white/35">
-                {base === "A" ? "Among the best in the industry for climate performance."
-                  : base === "B" ? "Above average climate performance across categories."
-                  : base === "C" ? "Meets baseline industry standards."
-                  : base === "D" ? "Below average — significant room for improvement."
-                  : "Critical improvement needed across all categories."}
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-teal-400/70">
+                Top 3
               </p>
+              <div className="grid gap-4 md:grid-cols-3">
+                <PodiumCard airline={scores[1]} rank={1} />
+                <PodiumCard airline={scores[0]} rank={0} />
+                <PodiumCard airline={scores[2]} rank={2} />
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/25">Rank</p>
-          <p className="text-3xl font-bold text-white">{rank}</p>
-          <p className="text-[11px] text-white/25">of {totalAirlines} airlines</p>
-        </div>
-      </div>
 
-      {/* Category breakdown */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white">Category Breakdown</h3>
-          <span className="text-[10px] text-white/20">Grading Scale</span>
-        </div>
-
-        <div className="space-y-2">
-          {CATEGORY_ORDER.map((key) => {
-            const meta = CATEGORY_META[key];
-            const value = airline.categories[key];
-            const catGrade = scoreToPlusMinusGrade(value);
-
-            return (
-              <div key={key} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-                {/* Category info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white">{meta.label}</p>
-                  <p className="text-[10px] text-white/25">{meta.description}</p>
-                </div>
-
-                {/* Grade badge */}
-                <div className={`flex h-8 w-10 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${pmGradeBg(catGrade)} text-xs font-black text-white`}>
-                  {catGrade}
-                </div>
-
-                {/* Label + percentile */}
-                <div className="w-[110px] flex-shrink-0 text-right">
-                  <p className={`text-xs font-semibold ${pmGradeLabelColor(catGrade)}`}>{pmGradeLabel(catGrade)}</p>
-                  <p className="text-[10px] text-white/25">{percentileLabel(value)}</p>
+            {/* Scoring Breakdown sidebar */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="rounded-2xl border border-teal-400/20 p-5"
+              style={{ ...PANEL, alignSelf: "start" }}
+            >
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-teal-400/70">
+                Scoring Breakdown
+              </p>
+              <div className="space-y-4">
+                {CATEGORY_ORDER.map((key) => {
+                  const meta = CATEGORY_META[key];
+                  const max = CATEGORY_MAX[key];
+                  return (
+                    <div key={key}>
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-white/80">
+                          <span>{meta.icon}</span> {meta.label}
+                        </span>
+                        <span className="text-xs text-teal-400">{max} pts</span>
+                      </div>
+                      <div
+                        className="h-1.5 w-full overflow-hidden rounded-full"
+                        style={{ background: "rgba(255,255,255,0.08)" }}
+                      >
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${max}%`,
+                            background: "linear-gradient(90deg,#2dd4bf,#34d399)",
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-[10px] text-white/35">{meta.description}</p>
+                    </div>
+                  );
+                })}
+                <div
+                  className="mt-2 flex items-center justify-between rounded-lg px-3 py-2"
+                  style={{ background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.18)" }}
+                >
+                  <span className="text-xs font-semibold text-white/70">Total</span>
+                  <span className="text-sm font-bold text-teal-300">100 pts</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </motion.div>
+          </div>
+        ) : null}
 
-      {/* Narrative */}
-      <div className="rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-        <p className="text-xs leading-relaxed text-white/40">{airline.narrative}</p>
-      </div>
+        {/* Full Rankings */}
+        {!isLoading && scores.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-teal-400/70">
+                Full Rankings
+              </p>
+              <div className="h-px flex-1" style={{ background: "rgba(45,212,191,0.15)" }} />
+            </div>
+            {scores.map((airline, i) => (
+              <RankingRow key={airline.airlineCode} airline={airline} index={i} />
+            ))}
+          </div>
+        )}
 
-      {/* View full report */}
-      <div className="flex justify-end">
-        <Link
-          href={`/airline/${airline.airlineCode.toLowerCase()}`}
-          className="rounded-lg border border-white/10 bg-white/[0.04] px-5 py-2.5 text-xs font-medium text-white/60 transition-all hover:bg-white/10 hover:text-white"
-        >
-          View Full Report
-        </Link>
+        {/* Did You Know */}
+        {!isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="rounded-2xl border border-teal-400/20 p-6 text-center"
+            style={PANEL}
+          >
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-teal-400/70">
+              Did You Know?
+            </p>
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-white/60">
+              If all airlines adopted contrail-aware flight planning, we could eliminate up to{" "}
+              <span className="font-bold text-white">35%</span> of aviation&apos;s total warming
+              effect with less than <span className="font-bold text-white">1%</span> increase in
+              fuel costs — equivalent to planting{" "}
+              <span className="font-bold text-emerald-400">billions of trees</span> every year.
+            </p>
+          </motion.div>
+        )}
+
       </div>
     </div>
   );
 }
-
-/* ═════════════════════════════════════════════════════════════════════════
-   SMALL COMPONENTS
-   ═════════════════════════════════════════════════════════════════════════ */
 
 function LoadingState() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
+    <div className="flex items-center justify-center py-20">
       <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-emerald-400 border-t-transparent" />
-        <p className="mt-4 text-sm text-white/40">Loading report cards...</p>
+        <div
+          className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
+          style={{ borderColor: "rgba(45,212,191,0.4)", borderTopColor: "transparent" }}
+        />
+        <p className="mt-4 text-sm text-white/40">Loading airline rankings...</p>
       </div>
-    </div>
-  );
-}
-
-function Pagination({ page, totalPages, setPage }: { page: number; totalPages: number; setPage: (p: number) => void }) {
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={() => setPage(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="rounded-md px-2 py-1 text-xs text-white/40 hover:text-white disabled:opacity-30"
-      >
-        &lt;
-      </button>
-      {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((p) => (
-        <button
-          key={p}
-          onClick={() => setPage(p)}
-          className={`h-7 w-7 rounded-md text-xs font-medium transition-colors ${
-            page === p
-              ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          {p}
-        </button>
-      ))}
-      {totalPages > 4 && (
-        <>
-          <span className="text-xs text-white/20">...</span>
-          <button
-            onClick={() => setPage(totalPages)}
-            className={`h-7 w-7 rounded-md text-xs font-medium ${page === totalPages ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-400" : "text-white/40 hover:text-white/70"}`}
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-      <button
-        onClick={() => setPage(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages}
-        className="rounded-md px-2 py-1 text-xs text-white/40 hover:text-white disabled:opacity-30"
-      >
-        &gt;
-      </button>
     </div>
   );
 }

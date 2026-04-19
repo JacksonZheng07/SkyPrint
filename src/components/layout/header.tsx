@@ -14,7 +14,7 @@ const NAV_ITEMS = [
 
 export function Header() {
   const pathname = usePathname();
-  const isMission = pathname === "/mission";
+  const isMission = pathname === "/mission" || pathname === "/airlines";
 
   return (
     <header

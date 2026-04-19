@@ -2,13 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import type { AirlineScore } from "@/lib/types/airline";
-import {
-  getTierColor,
-  scoreToPlusMinusGrade,
-  pmGradeBg,
-} from "@/lib/utils/grades";
+import { scoreToPlusMinusGrade, pmGradeBg } from "@/lib/utils/grades";
 import { VerticalCategoryBars } from "./category-bars";
 
 const RANK_EMOJI = ["🥇", "🥈", "🥉"];
@@ -29,28 +24,33 @@ export function RankingRow({ airline, index }: RankingRowProps) {
       transition={{ delay: 0.3 + index * 0.05 }}
     >
       <Link href={`/airline/${airline.airlineCode.toLowerCase()}`}>
-        <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:border-primary/30">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg font-bold">
+        <div
+          className="group cursor-pointer overflow-hidden rounded-xl border transition-all"
+          style={{
+            background: "linear-gradient(135deg, rgba(12,24,50,0.80) 0%, rgba(5,12,28,0.88) 100%)",
+            backdropFilter: "blur(16px)",
+            borderColor: "rgba(45,212,191,0.15)",
+            boxShadow: "0 0 0 1px rgba(45,212,191,0.08), 0 4px 20px rgba(0,0,0,0.35)",
+          }}
+        >
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white/70"
+              style={{ background: "rgba(255,255,255,0.07)" }}
+            >
               {index < 3 ? RANK_EMOJI[index] : `#${index + 1}`}
             </div>
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${pmGradeBg(pmGrade)} text-lg font-bold text-white`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${pmGradeBg(pmGrade)} text-lg font-bold text-white`}
+              style={{ boxShadow: "0 0 16px rgba(0,0,0,0.4)" }}
             >
               {pmGrade}
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold group-hover:text-primary transition-colors">
-                  {airline.airlineName}
-                </h3>
-                {airline.tier && (
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getTierColor(airline.tier)}`}>
-                    {airline.tier}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-white transition-colors group-hover:text-teal-300">
+                {airline.airlineName}
+              </h3>
+              <div className="flex items-center gap-3 text-xs text-white/40">
                 <span>Fleet: {airline.fleetProfile.totalAircraft}</span>
                 <span>•</span>
                 <span>Avg age: {airline.fleetProfile.averageAge}y</span>
@@ -58,7 +58,7 @@ export function RankingRow({ airline, index }: RankingRowProps) {
                 <span>
                   Contrail program:{" "}
                   {hasContrailProgram ? (
-                    <span className="text-green-500 font-medium">Active</span>
+                    <span className="font-medium text-emerald-400">Active</span>
                   ) : (
                     <span className="text-red-400">None</span>
                   )}
@@ -66,16 +66,15 @@ export function RankingRow({ airline, index }: RankingRowProps) {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <VerticalCategoryBars categories={airline.categories} />
+              <VerticalCategoryBars categories={airline.categories} dark />
               <div className="text-right">
-                <span className="text-2xl font-bold">{airline.overallScore}</span>
-                <span className="text-xs text-muted-foreground">/100</span>
+                <span className="text-2xl font-bold text-white">{airline.overallScore}</span>
+                <span className="text-xs text-white/40">/100</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </Link>
     </motion.div>
   );
 }
-
