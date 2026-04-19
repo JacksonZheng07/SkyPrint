@@ -11,22 +11,23 @@ interface BookingFormProps {
   item: FlightComparisonItem;
   price: number;
   isBooking: boolean;
-  onConfirm: (email: string) => void;
+  onConfirm: (phoneNumber: string) => void;
   onCancel: () => void;
 }
 
 export function BookingForm({ item, price, isBooking, onConfirm, onCancel }: BookingFormProps) {
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
   return (
     <div className="space-y-5">
       <BookingHeader price={price} />
       <FlightSummary item={item} />
-      <PassengerFields email={email} onEmailChange={setEmail} />
+      <PassengerFields email={email} onEmailChange={setEmail} phone={phone} onPhoneChange={setPhone} />
       <PaymentFields />
       <button
-        onClick={() => onConfirm(email)}
-        disabled={isBooking}
+        onClick={() => onConfirm(phone)}
+        disabled={isBooking || !phone}
         className="w-full rounded-lg bg-emerald-600 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {isBooking ? "Processing..." : `Pay $${price}`}
@@ -82,9 +83,13 @@ function FlightSummary({ item }: { item: FlightComparisonItem }) {
 function PassengerFields({
   email,
   onEmailChange,
+  phone,
+  onPhoneChange,
 }: {
   email: string;
   onEmailChange: (v: string) => void;
+  phone: string;
+  onPhoneChange: (v: string) => void;
 }) {
   const [fullName, setFullName] = useState("");
   return (
@@ -108,6 +113,19 @@ function PassengerFields({
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
         />
+      </div>
+      <div>
+        <Label htmlFor="phone">Phone Number</Label>
+        <Input
+          id="phone"
+          type="tel"
+          placeholder="+1 (555) 123-4567"
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value)}
+        />
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          We&apos;ll text you climate impact updates via iMessage
+        </p>
       </div>
     </div>
   );

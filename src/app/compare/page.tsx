@@ -17,7 +17,7 @@ import { calculateImpactSummary } from "@/lib/pipeline/impact";
 export default function ComparePage() {
   const { comparison, isLoading, error, compare } = useComparison();
   const { trigger } = useAero();
-  const { scheduleBooking } = usePhoton();
+  const { scheduleBooking, greenerAltIncluded } = usePhoton();
 
   const [selectedFlight, setSelectedFlight] = useState<FlightComparisonItem | null>(null);
   const [isBooking, setIsBooking] = useState(false);
@@ -91,6 +91,8 @@ export default function ComparePage() {
           userId: "demo-user",
           departureTime: selectedFlight.flight.departureTime,
           arrivalTime: selectedFlight.flight.arrivalTime,
+          bookedFlightId: selectedFlight.flight.flightId,
+          comparison,
           payload: {
             phoneNumber,
             impactSummary: summary,
@@ -181,6 +183,7 @@ export default function ComparePage() {
             }}
             isBooking={isBooking}
             isBooked={isBooked}
+            greenerAltIncluded={greenerAltIncluded}
           />
         )}
       </div>

@@ -4,7 +4,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AirlineScore } from "@/lib/types/airline";
-import { GRADE_STYLES, type Grade } from "@/lib/utils/grades";
+import {
+  GRADE_STYLES,
+  getTierColor,
+  scoreToPlusMinusGrade,
+  pmGradeBaseGrade,
+  pmGradeBg,
+  pmGradeLabel,
+  pmGradeLabelColor,
+} from "@/lib/utils/grades";
 import { VerticalCategoryBars } from "./category-bars";
 
 const RANK_EMOJI = ["🥇", "🥈", "🥉"];
@@ -15,7 +23,7 @@ interface RankingRowProps {
 }
 
 export function RankingRow({ airline, index }: RankingRowProps) {
-  const style = GRADE_STYLES[airline.overallGrade as Grade];
+  const pmGrade = scoreToPlusMinusGrade(airline.overallScore);
   const hasContrailProgram = airline.categories.contrailMitigation >= 50;
 
   return (
@@ -31,9 +39,9 @@ export function RankingRow({ airline, index }: RankingRowProps) {
               {index < 3 ? RANK_EMOJI[index] : `#${index + 1}`}
             </div>
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${style.bg} text-lg font-bold text-white`}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${pmGradeBg(pmGrade)} text-lg font-bold text-white`}
             >
-              {airline.overallGrade}
+              {pmGrade}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -75,13 +83,3 @@ export function RankingRow({ airline, index }: RankingRowProps) {
   );
 }
 
-function getTierColor(tier: string): string {
-  switch (tier) {
-    case "Sky Saints": return "bg-emerald-500/15 text-emerald-400";
-    case "Clean Cruisers": return "bg-sky-500/15 text-sky-400";
-    case "Middle of the Pack": return "bg-amber-500/15 text-amber-400";
-    case "Greenwash Gold Medalists": return "bg-orange-500/15 text-orange-400";
-    case "Contrail Criminals": return "bg-red-500/15 text-red-400";
-    default: return "bg-white/10 text-white/60";
-  }
-}

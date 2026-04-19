@@ -1,13 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import { ContrailBlocks } from "@/components/compare/contrail-blocks";
-import type { FlightComparisonItem, FlightComparison } from "@/lib/types/comparison";
-import { formatDuration, formatContrailRisk } from "@/lib/utils/format";
+import { BookingConfirmation } from "@/components/compare/booking-confirmation";
+import type { FlightComparisonItem, FlightComparison, ImpactSummary } from "@/lib/types/comparison";
+import { formatDuration, formatContrailRisk, formatCo2 } from "@/lib/utils/format";
 import { useAero } from "@/hooks/use-aero";
+import { usePhoton } from "@/hooks/use-photon";
+import { calculateImpactSummary } from "@/lib/pipeline/impact";
+import { deriveAirlineEco, type DerivedAirlineEco } from "@/lib/pipeline/airline-eco";
 
 const FUEL_KG_TO_LITERS = 0.32;
 const CO2_PER_TREE_KG = 21;
@@ -46,7 +50,14 @@ function CompareDetailContent() {
   const idB = searchParams.get("b");
   const [flightA, setFlightA] = useState<FlightComparisonItem | null>(null);
   const [flightB, setFlightB] = useState<FlightComparisonItem | null>(null);
+  const [comparisonData, setComparisonData] = useState<FlightComparison | null>(null);
+  const [selectedFlight, setSelectedFlight] = useState<FlightComparisonItem | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
+  const [isBooked, setIsBooked] = useState(false);
+  const [impactSummary, setImpactSummary] = useState<ImpactSummary | null>(null);
   const { setPageContext } = useAero();
+  const { scheduleBooking, greenerAltIncluded } = usePhoton();
+  const { trigger } = useAero();
 
   useEffect(() => {
     const raw = sessionStorage.getItem("skyprint_comparison");
@@ -58,10 +69,60 @@ function CompareDetailContent() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlightA(a);
       setFlightB(b);
+      setComparisonData(data);
     } catch {
       // invalid session data
     }
   }, [idA, idB]);
+
+  const handleBookFlight = useCallback((item: FlightComparisonItem) => {
+    setSelectedFlight(item);
+    setIsBooked(false);
+    setImpactSummary(null);
+  }, []);
+
+  const handleConfirmBooking = useCallback(
+    async (phoneNumber: string) => {
+      if (!selectedFlight || !comparisonData) return;
+      setIsBooking(true);
+      try {
+        const worstFlight = comparisonData.flights[comparisonData.flights.length - 1];
+        const summary = calculateImpactSummary(
+          selectedFlight.contrail.co2Kg,
+          worstFlight.contrail.co2Kg
+        );
+        setImpactSummary(summary);
+
+        await scheduleBooking({
+          userId: "demo-user",
+          departureTime: selectedFlight.flight.departureTime,
+          arrivalTime: selectedFlight.flight.arrivalTime,
+          bookedFlightId: selectedFlight.flight.flightId,
+          comparison: comparisonData,
+          payload: {
+            phoneNumber,
+            impactSummary: summary,
+            contrailData: selectedFlight.metrics,
+          },
+        });
+
+        setIsBooked(true);
+        trigger(
+          "booking_complete",
+          JSON.stringify({
+            flight: `${selectedFlight.flight.airlineCode} ${selectedFlight.flight.flightNumber}`,
+            co2Saved: formatCo2(summary.co2Saved),
+            contrailRisk: selectedFlight.metrics.riskRating,
+          })
+        );
+      } catch (err) {
+        console.error("Booking error:", err);
+      } finally {
+        setIsBooking(false);
+      }
+    },
+    [selectedFlight, comparisonData, scheduleBooking, trigger]
+  );
 
   // Cache comparison context into Gemini so Aero can answer questions
   useEffect(() => {
@@ -95,8 +156,8 @@ function CompareDetailContent() {
       },
       betterChoice: better.flight.airline,
       co2DeltaKg: Math.abs(flightA.contrail.co2Kg - flightB.contrail.co2Kg),
-      airlineEcoA: AIRLINE_ECO_DATA[flightA.flight.airlineCode]?.tier ?? "Unranked",
-      airlineEcoB: AIRLINE_ECO_DATA[flightB.flight.airlineCode]?.tier ?? "Unranked",
+      airlineEcoA: deriveAirlineEco(flightA.flight.airlineCode).tier,
+      airlineEcoB: deriveAirlineEco(flightB.flight.airlineCode).tier,
     });
   }, [flightA, flightB, setPageContext]);
 
@@ -211,8 +272,8 @@ function CompareDetailContent() {
             />
             <CompareRow
               label="Eco Grade"
-              a={AIRLINE_ECO_DATA[flightA.flight.airlineCode]?.grade ?? "C"}
-              b={AIRLINE_ECO_DATA[flightB.flight.airlineCode]?.grade ?? "C"}
+              a={deriveAirlineEco(flightA.flight.airlineCode).grade}
+              b={deriveAirlineEco(flightB.flight.airlineCode).grade}
             />
           </div>
         </motion.div>
@@ -244,8 +305,9 @@ function CompareDetailContent() {
         {/* Aero summary */}
         <motion.div variants={fadeUp} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-6 backdrop-blur-xl">
           <div className="flex gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500">
-              <span className="text-sm font-bold text-white">A</span>
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-900 shadow-lg shadow-cyan-500/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/AeroImage.png" alt="Aero" className="h-full w-full scale-[1.95] translate-y-[4px] object-cover" />
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Aero&apos;s take</p>
@@ -270,7 +332,10 @@ function CompareDetailContent() {
               </div>
               {flightA.flight.price && <p className="text-lg font-bold text-white">${flightA.flight.price}</p>}
             </div>
-            <button className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors ${better === "a" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-white/10 hover:bg-white/15"}`}>
+            <button
+              onClick={() => handleBookFlight(flightA)}
+              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors ${better === "a" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-white/10 hover:bg-white/15"}`}
+            >
               Book {flightA.flight.airlineCode} {better === "a" ? "— Better Choice" : ""}
             </button>
           </div>
@@ -282,11 +347,31 @@ function CompareDetailContent() {
               </div>
               {flightB.flight.price && <p className="text-lg font-bold text-white">${flightB.flight.price}</p>}
             </div>
-            <button className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors ${better === "b" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-white/10 hover:bg-white/15"}`}>
+            <button
+              onClick={() => handleBookFlight(flightB)}
+              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors ${better === "b" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-white/10 hover:bg-white/15"}`}
+            >
               Book {flightB.flight.airlineCode} {better === "b" ? "— Better Choice" : ""}
             </button>
           </div>
         </motion.div>
+
+        {/* Booking modal */}
+        {selectedFlight && (
+          <BookingConfirmation
+            item={selectedFlight}
+            impactSummary={impactSummary}
+            onConfirm={handleConfirmBooking}
+            onCancel={() => {
+              setSelectedFlight(null);
+              setIsBooked(false);
+              setImpactSummary(null);
+            }}
+            isBooking={isBooking}
+            isBooked={isBooked}
+            greenerAltIncluded={greenerAltIncluded}
+          />
+        )}
 
         <motion.div variants={fadeUp} className="flex justify-center">
           <Link href="/compare" className="inline-flex items-center gap-1 text-sm text-white/50 hover:text-white transition-colors">
@@ -529,32 +614,6 @@ function getTimeOfDayRisk(iso: string): string {
 
 /* ===== Airline Reputation ===== */
 
-interface AirlineEcoData {
-  grade: string;
-  gradeColor: string;
-  tier: string;
-  contrailProgram: boolean;
-  safAdoption: number; // % of fuel
-  fleetEfficiency: string;
-  emissionsTrend: "improving" | "flat" | "worsening";
-  commitments: string;
-}
-
-const AIRLINE_ECO_DATA: Record<string, AirlineEcoData> = {
-  AS: { grade: "A", gradeColor: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30", tier: "Sky Saints", contrailProgram: true, safAdoption: 8.2, fleetEfficiency: "High", emissionsTrend: "improving", commitments: "Net zero by 2040, active contrail avoidance trials" },
-  DL: { grade: "A-", gradeColor: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30", tier: "Sky Saints", contrailProgram: true, safAdoption: 5.1, fleetEfficiency: "High", emissionsTrend: "improving", commitments: "Net zero by 2050, SAF investment leader" },
-  NH: { grade: "A-", gradeColor: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30", tier: "Sky Saints", contrailProgram: true, safAdoption: 4.8, fleetEfficiency: "High", emissionsTrend: "improving", commitments: "Carbon neutral by 2050, fleet modernization" },
-  UA: { grade: "B+", gradeColor: "text-sky-400 bg-sky-500/15 border-sky-500/30", tier: "Clean Cruisers", contrailProgram: false, safAdoption: 3.4, fleetEfficiency: "Above Avg", emissionsTrend: "improving", commitments: "100% green by 2050, largest SAF purchase agreement" },
-  BA: { grade: "B+", gradeColor: "text-sky-400 bg-sky-500/15 border-sky-500/30", tier: "Clean Cruisers", contrailProgram: false, safAdoption: 2.8, fleetEfficiency: "Above Avg", emissionsTrend: "flat", commitments: "Net zero by 2050, fleet renewal underway" },
-  VS: { grade: "B", gradeColor: "text-sky-400 bg-sky-500/15 border-sky-500/30", tier: "Clean Cruisers", contrailProgram: false, safAdoption: 2.2, fleetEfficiency: "Above Avg", emissionsTrend: "flat", commitments: "Net zero by 2050, SAF pioneer" },
-  B6: { grade: "B", gradeColor: "text-sky-400 bg-sky-500/15 border-sky-500/30", tier: "Clean Cruisers", contrailProgram: false, safAdoption: 1.9, fleetEfficiency: "Average", emissionsTrend: "flat", commitments: "Carbon neutral domestic by 2040" },
-  AA: { grade: "C+", gradeColor: "text-amber-400 bg-amber-500/15 border-amber-500/30", tier: "Middle of the Pack", contrailProgram: false, safAdoption: 1.2, fleetEfficiency: "Average", emissionsTrend: "flat", commitments: "Net zero by 2050, limited concrete action" },
-  WN: { grade: "C", gradeColor: "text-amber-400 bg-amber-500/15 border-amber-500/30", tier: "Middle of the Pack", contrailProgram: false, safAdoption: 0.8, fleetEfficiency: "Below Avg", emissionsTrend: "flat", commitments: "Efficiency improvements, no net zero target" },
-  NK: { grade: "D+", gradeColor: "text-orange-400 bg-orange-500/15 border-orange-500/30", tier: "Contrail Criminals", contrailProgram: false, safAdoption: 0.1, fleetEfficiency: "Below Avg", emissionsTrend: "worsening", commitments: "No published environmental plan" },
-};
-
-const DEFAULT_ECO: AirlineEcoData = { grade: "C", gradeColor: "text-amber-400 bg-amber-500/15 border-amber-500/30", tier: "Unranked", contrailProgram: false, safAdoption: 0.5, fleetEfficiency: "Unknown", emissionsTrend: "flat", commitments: "No public data available" };
-
 function CarbonCostBreakdown({ flightA, flightB }: { flightA: FlightComparisonItem; flightB: FlightComparisonItem }) {
   const co2A = flightA.contrail.co2Kg;
   const co2B = flightB.contrail.co2Kg;
@@ -593,7 +652,7 @@ function CarbonCostBreakdown({ flightA, flightB }: { flightA: FlightComparisonIt
 }
 
 function AirlineReputationCard({ code, name }: { code: string; name: string }) {
-  const eco = AIRLINE_ECO_DATA[code] ?? DEFAULT_ECO;
+  const eco = deriveAirlineEco(code);
   const trendIcon = eco.emissionsTrend === "improving" ? "↓" : eco.emissionsTrend === "worsening" ? "↑" : "→";
   const trendColor = eco.emissionsTrend === "improving" ? "text-emerald-400" : eco.emissionsTrend === "worsening" ? "text-red-400" : "text-amber-400";
 

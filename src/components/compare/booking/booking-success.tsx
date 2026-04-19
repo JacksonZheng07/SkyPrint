@@ -9,9 +9,10 @@ import { co2ToTrees, co2ToCarMiles } from "@/lib/utils/units";
 interface BookingSuccessProps {
   impactSummary: ImpactSummary | null;
   onClose: () => void;
+  greenerAltIncluded?: boolean;
 }
 
-export function BookingSuccess({ impactSummary, onClose }: BookingSuccessProps) {
+export function BookingSuccess({ impactSummary, onClose, greenerAltIncluded }: BookingSuccessProps) {
   return (
     <div className="text-center space-y-4">
       <SuccessIcon />
@@ -22,7 +23,8 @@ export function BookingSuccess({ impactSummary, onClose }: BookingSuccessProps) 
         </p>
       </div>
       {impactSummary && impactSummary.co2Saved > 0 && <ImpactSaved impact={impactSummary} />}
-      <TimelineNotes />
+      {greenerAltIncluded && <GreenerAltNotice />}
+      <TimelineNotes greenerAltIncluded={greenerAltIncluded} />
       <Button onClick={onClose} className="w-full">
         Done
       </Button>
@@ -59,10 +61,30 @@ function ImpactSaved({ impact }: { impact: ImpactSummary }) {
   );
 }
 
-function TimelineNotes() {
+function GreenerAltNotice() {
+  return (
+    <div className="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/20">
+      <div className="flex items-center justify-center gap-2">
+        <span className="text-lg">🌿</span>
+        <p className="font-semibold text-emerald-700 dark:text-emerald-400">
+          Greener alternative found
+        </p>
+      </div>
+      <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-500">
+        We found a lower-impact flight on this route. Check your phone — we&apos;ll
+        text you the details in about a minute.
+      </p>
+    </div>
+  );
+}
+
+function TimelineNotes({ greenerAltIncluded }: { greenerAltIncluded?: boolean }) {
   return (
     <div className="space-y-1 text-xs text-muted-foreground">
       <p>Booking confirmation → Now</p>
+      {greenerAltIncluded && (
+        <p className="text-emerald-600 dark:text-emerald-400">Greener alternative nudge → In 1 minute</p>
+      )}
       <p>Pre-flight contrail forecast → 24h before departure</p>
       <p>Post-flight impact summary → After landing</p>
     </div>

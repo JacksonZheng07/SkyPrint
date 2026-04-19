@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { motion, type Variants } from "framer-motion";
+import { motion, useSpring, useTransform, type Variants } from "framer-motion";
 import type { PlaygroundMapHandle } from "@/app/playground/components/PlaygroundMap";
 import { useSimulation } from "@/hooks/use-simulation";
 import type { AircraftType } from "@/lib/types/flight";
@@ -64,6 +64,32 @@ export default function SimulatePage() {
   const [cruiseAlt, setCruiseAlt] = useState(35000);
   const [resultTab, setResultTab] = useState<"baseline" | "optimized">("baseline");
 
+  // Debounced auto-simulate on parameter changes
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasSimulatedOnce = useRef(false);
+
+  const triggerSimulate = useCallback((o: string, d: string, dt: string, ac: AircraftType, alt: number) => {
+    if (!o || !d || o.length < 3 || d.length < 3) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const effectiveDate = dt || todayISO();
+      simulate({
+        origin: o.toUpperCase(),
+        destination: d.toUpperCase(),
+        aircraftType: ac,
+        departureTime: new Date(`${effectiveDate}T10:00:00Z`).toISOString(),
+        cruiseAltitudeFt: alt,
+      });
+      hasSimulatedOnce.current = true;
+    }, hasSimulatedOnce.current ? 400 : 0);
+  }, [simulate]);
+
+  // Auto-simulate when aircraft, date, or altitude changes (only after first manual simulate)
+  useEffect(() => {
+    if (!hasSimulatedOnce.current) return;
+    triggerSimulate(origin, destination, date, aircraftType, cruiseAlt);
+  }, [aircraftType, date, cruiseAlt]);
+
   // When simulation result arrives, show both routes on the map
   useEffect(() => {
     if (!result) return;
@@ -110,6 +136,7 @@ export default function SimulatePage() {
       departureTime: new Date(`${effectiveDate}T10:00:00Z`).toISOString(),
       cruiseAltitudeFt: cruiseAlt,
     });
+    hasSimulatedOnce.current = true;
   }
 
   function handleQuickSelect(f: QuickFlight) {
@@ -246,8 +273,11 @@ export default function SimulatePage() {
                 onChange={(e) => setCruiseAlt(Number(e.target.value))}
                 className="mt-1 w-full accent-emerald-500"
               />
-              <div className="flex justify-between text-[9px] text-white/30">
+              <div className="flex items-center justify-between text-[9px] text-white/30">
                 <span>28,000</span>
+                <span className={`font-medium ${cruiseAlt >= 35000 ? "text-red-400" : cruiseAlt >= 32000 ? "text-amber-400" : "text-emerald-400"}`}>
+                  {cruiseAlt >= 35000 ? "High contrail zone" : cruiseAlt >= 32000 ? "Moderate zone" : "Low contrail zone"}
+                </span>
                 <span>42,000</span>
               </div>
             </div>
@@ -359,7 +389,7 @@ export default function SimulatePage() {
             </div>
 
             {result ? (
-              <SimulationResults result={result} tab={resultTab} onTabChange={setResultTab} />
+              <SimulationResults result={result} tab={resultTab} onTabChange={setResultTab} isLoading={isLoading} />
             ) : (
               <div className="mt-10 flex flex-col items-center gap-4 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03]">
@@ -409,16 +439,31 @@ export default function SimulatePage() {
   );
 }
 
+/* ===== Animated Number ===== */
+
+function AnimatedNumber({ value, decimals = 0, suffix = "", className = "" }: { value: number; decimals?: number; suffix?: string; className?: string }) {
+  const spring = useSpring(value, { stiffness: 120, damping: 20, mass: 0.5 });
+  const display = useTransform(spring, (v) => `${decimals > 0 ? v.toFixed(decimals) : Math.round(v)}${suffix}`);
+
+  useEffect(() => {
+    spring.set(value);
+  }, [spring, value]);
+
+  return <motion.span className={className}>{display}</motion.span>;
+}
+
 /* ===== Simulation Results Panel ===== */
 
 function SimulationResults({
   result,
   tab,
   onTabChange,
+  isLoading,
 }: {
   result: SimulationResult;
   tab: "baseline" | "optimized";
   onTabChange: (t: "baseline" | "optimized") => void;
+  isLoading?: boolean;
 }) {
   const { baseline, optimized, efReductionPercent, fuelPenaltyPercent } = result;
   const co2Delta = optimized.co2Kg - baseline.co2Kg;
@@ -429,17 +474,24 @@ function SimulationResults({
     ? Math.round(((contrailBaselineRisk - contrailOptimizedRisk) / contrailBaselineRisk) * 100)
     : 0;
 
-  const baselineImpact = (baseline.co2Kg / 30 + baseline.summary.contrailProbability * 6).toFixed(1);
-  const optimizedImpact = (optimized.co2Kg / 30 + optimized.summary.contrailProbability * 6).toFixed(1);
-  const impactReductionPct = Number(baselineImpact) > 0
-    ? Math.round(((Number(baselineImpact) - Number(optimizedImpact)) / Number(baselineImpact)) * 100)
+  const baselineImpact = baseline.co2Kg / 30 + baseline.summary.contrailProbability * 6;
+  const optimizedImpact = optimized.co2Kg / 30 + optimized.summary.contrailProbability * 6;
+  const impactReductionPct = baselineImpact > 0
+    ? Math.round(((baselineImpact - optimizedImpact) / baselineImpact) * 100)
     : 0;
 
   // Best altitude adjustment insight
   const adj = result.altitudeAdjustments[0];
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="relative mt-4 space-y-4">
+      {/* Re-simulating overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/20 backdrop-blur-[2px]">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
         <button
@@ -474,11 +526,11 @@ function SimulationResults({
             <p className="text-[10px] text-white/30">per passenger</p>
           </div>
           <div className="flex items-center gap-2.5 text-sm">
-            <span className="font-bold text-white">{Math.round(baseline.co2Kg)} kg</span>
+            <span className="font-bold text-white"><AnimatedNumber value={baseline.co2Kg} /> kg</span>
             <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            <span className="font-bold text-white">{Math.round(optimized.co2Kg)} kg</span>
+            <span className="font-bold text-white"><AnimatedNumber value={optimized.co2Kg} /> kg</span>
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${co2Delta > 0 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
-              {co2Delta > 0 ? "+" : ""}{co2DeltaPct.toFixed(1)}%
+              {co2Delta > 0 ? "+" : ""}<AnimatedNumber value={co2DeltaPct} decimals={1} suffix="%" />
             </span>
           </div>
         </div>
@@ -495,14 +547,24 @@ function SimulationResults({
             <p className="text-[10px] text-white/30">relative risk</p>
           </div>
           <div className="flex items-center gap-2.5 text-sm">
-            <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailBaselineRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailBaselineRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+            <motion.span
+              key={`base-${contrailBaselineRisk > 0.5 ? "high" : contrailBaselineRisk > 0.25 ? "med" : "low"}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailBaselineRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailBaselineRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}
+            >
               {contrailBaselineRisk > 0.5 ? "High" : contrailBaselineRisk > 0.25 ? "Med" : "Low"}
-            </span>
+            </motion.span>
             <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailOptimizedRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailOptimizedRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+            <motion.span
+              key={`opt-${contrailOptimizedRisk > 0.5 ? "high" : contrailOptimizedRisk > 0.25 ? "med" : "low"}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={`rounded-md px-2 py-0.5 text-xs font-bold ${contrailOptimizedRisk > 0.5 ? "bg-red-500/15 text-red-400" : contrailOptimizedRisk > 0.25 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}
+            >
               {contrailOptimizedRisk > 0.5 ? "High" : contrailOptimizedRisk > 0.25 ? "Med" : "Low"}
-            </span>
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-{contrailReductionPct}%</span>
+            </motion.span>
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-<AnimatedNumber value={contrailReductionPct} />%</span>
           </div>
         </div>
 
@@ -518,17 +580,22 @@ function SimulationResults({
             <p className="text-[10px] text-white/30">score (lower is better)</p>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs font-bold text-white">{baselineImpact}</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs font-bold text-white"><AnimatedNumber value={baselineImpact} decimals={1} /></span>
             <svg className="h-3 w-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">{optimizedImpact}</span>
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-{impactReductionPct}%</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400"><AnimatedNumber value={optimizedImpact} decimals={1} /></span>
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">-<AnimatedNumber value={impactReductionPct} />%</span>
           </div>
         </div>
       </div>
 
       {/* Insight callout */}
       {adj && (
-        <div className="flex gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] p-3.5 backdrop-blur-sm">
+        <motion.div
+          key={`adj-${adj.suggestedAltitudeFt}`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] p-3.5 backdrop-blur-sm"
+        >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15">
             <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
@@ -537,7 +604,7 @@ function SimulationResults({
           <p className="text-xs leading-relaxed text-white/60">
             Lowering altitude by <span className="font-semibold text-emerald-400">{Math.abs(adj.suggestedAltitudeFt - adj.originalAltitudeFt).toLocaleString()} ft</span> avoids ice supersaturated regions, reducing contrail formation significantly with minimal fuel penalty.
           </p>
-        </div>
+        </motion.div>
       )}
 
       {/* Action buttons */}

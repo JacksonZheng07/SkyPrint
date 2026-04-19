@@ -8,70 +8,17 @@ import {
   CATEGORY_ORDER,
   CATEGORY_META,
 } from "@/lib/utils/airline-categories";
-import { GRADE_STYLES, type Grade } from "@/lib/utils/grades";
-
-/* ── Plus/minus grade system ── */
-type PlusMinusGrade = "A" | "A-" | "B+" | "B" | "B-" | "C+" | "C" | "C-" | "D+" | "D" | "D-" | "F";
-
-function scoreToPlusMinusGrade(score: number): PlusMinusGrade {
-  if (score >= 88) return "A";
-  if (score >= 80) return "A-";
-  if (score >= 75) return "B+";
-  if (score >= 68) return "B";
-  if (score >= 63) return "B-";
-  if (score >= 58) return "C+";
-  if (score >= 50) return "C";
-  if (score >= 45) return "C-";
-  if (score >= 40) return "D+";
-  if (score >= 35) return "D";
-  if (score >= 28) return "D-";
-  return "F";
-}
-
-function pmGradeLabel(g: PlusMinusGrade): string {
-  if (g === "A" || g === "A-") return "Excellent";
-  if (g === "B+" || g === "B") return "Very Good";
-  if (g === "B-") return "Good";
-  if (g === "C+" || g === "C") return "Average";
-  if (g === "C-" || g === "D+") return "Below Average";
-  if (g === "D" || g === "D-") return "Poor";
-  return "Poor";
-}
-
-function pmGradeBaseGrade(g: PlusMinusGrade): Grade {
-  if (g.startsWith("A")) return "A";
-  if (g.startsWith("B")) return "B";
-  if (g.startsWith("C")) return "C";
-  if (g.startsWith("D")) return "D";
-  return "F";
-}
-
-function pmLabelColor(g: PlusMinusGrade): string {
-  const base = pmGradeBaseGrade(g);
-  return GRADE_STYLES[base].text;
-}
-
-function pmGradeBg(g: PlusMinusGrade): string {
-  const base = pmGradeBaseGrade(g);
-  return GRADE_STYLES[base].bg;
-}
-
-function pmGradeBorder(g: PlusMinusGrade): string {
-  const base = pmGradeBaseGrade(g);
-  return GRADE_STYLES[base].border;
-}
-
-/** Percentile label for a category score */
-function percentileLabel(score: number): string {
-  if (score >= 85) return "Top 5% of airlines";
-  if (score >= 75) return "Top 10% of airlines";
-  if (score >= 65) return "Top 15% of airlines";
-  if (score >= 55) return "Top 25% of airlines";
-  if (score >= 45) return "Above industry average";
-  if (score >= 35) return "Industry average";
-  if (score >= 25) return "Below industry average";
-  return "Bottom quartile";
-}
+import {
+  GRADE_STYLES,
+  scoreToPlusMinusGrade,
+  pmGradeBaseGrade,
+  pmGradeLabel,
+  pmGradeBg,
+  pmGradeBorder,
+  pmGradeLabelColor,
+  percentileLabel,
+} from "@/lib/utils/grades";
+import { AirlineLogo } from "@/components/compare/airline-logo";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -155,8 +102,9 @@ export default function AirlinesPage() {
                 </div>
 
                 {/* Table header */}
-                <div className="mt-4 grid grid-cols-[40px_1fr_80px_100px_70px] items-center gap-3 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/25">
+                <div className="mt-4 grid grid-cols-[40px_36px_1fr_80px_100px_70px] items-center gap-3 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/25">
                   <span>Rank</span>
+                  <span></span>
                   <span>Airline</span>
                   <span className="text-center">Overall Grade</span>
                   <span />
@@ -188,13 +136,15 @@ export default function AirlinesPage() {
                           exit={{ opacity: 0, x: 8 }}
                           transition={{ duration: 0.3, delay: i * 0.02, ease: [0.25, 0.1, 0.25, 1] }}
                           onClick={() => setSelected(airline)}
-                          className={`grid w-full grid-cols-[40px_1fr_80px_100px_70px] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-all ${
+                          className={`grid w-full grid-cols-[40px_36px_1fr_80px_100px_70px] items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-all ${
                             isSelected
                               ? `border ${style.border} bg-white/[0.06]`
                               : "border border-transparent hover:bg-white/[0.04]"
                           }`}
                         >
                           <span className="text-base font-bold text-white/40">{globalIdx + 1}</span>
+
+                          <AirlineLogo code={airline.airlineCode} size={28} />
 
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-white">{airline.airlineName}</p>
@@ -208,7 +158,7 @@ export default function AirlinesPage() {
                           </div>
 
                           {/* Label */}
-                          <span className={`text-xs font-medium ${pmLabelColor(pmGrade)}`}>
+                          <span className={`text-xs font-medium ${pmGradeLabelColor(pmGrade)}`}>
                             {pmGradeLabel(pmGrade)}
                           </span>
 
@@ -293,14 +243,17 @@ function ReportCard({ airline, rank, totalAirlines }: { airline: AirlineScore; r
       {/* Header: name + big grade + rank */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-white">{airline.airlineName}</h2>
+          <div className="flex items-center gap-3">
+            <AirlineLogo code={airline.airlineCode} size={40} />
+            <h2 className="text-xl font-bold text-white">{airline.airlineName}</h2>
+          </div>
           <p className="mt-0.5 text-[11px] text-white/30">Overall Grade</p>
           <div className="mt-2 flex items-center gap-3">
             <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${pmGradeBg(pmGrade)} text-2xl font-black text-white shadow-lg`}>
               {pmGrade}
             </div>
             <div>
-              <p className={`text-sm font-semibold ${pmLabelColor(pmGrade)}`}>{pmGradeLabel(pmGrade)}</p>
+              <p className={`text-sm font-semibold ${pmGradeLabelColor(pmGrade)}`}>{pmGradeLabel(pmGrade)}</p>
               <p className="text-xs text-white/35">
                 {base === "A" ? "Among the best in the industry for climate performance."
                   : base === "B" ? "Above average climate performance across categories."
@@ -348,7 +301,7 @@ function ReportCard({ airline, rank, totalAirlines }: { airline: AirlineScore; r
 
                 {/* Label + percentile */}
                 <div className="w-[110px] flex-shrink-0 text-right">
-                  <p className={`text-xs font-semibold ${pmLabelColor(catGrade)}`}>{pmGradeLabel(catGrade)}</p>
+                  <p className={`text-xs font-semibold ${pmGradeLabelColor(catGrade)}`}>{pmGradeLabel(catGrade)}</p>
                   <p className="text-[10px] text-white/25">{percentileLabel(value)}</p>
                 </div>
               </div>

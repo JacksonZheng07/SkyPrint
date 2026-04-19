@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { co2ToCarMiles, co2ToTrees } from "@/lib/utils/units";
+import { AIRLINE_DATA, getSupportedAirlines } from "@/lib/pipeline/airline-data";
+import { computeCategories, computeOverallScore } from "@/lib/pipeline/airline-scoring";
+import { scoreToGrade } from "@/lib/utils/grades";
 
 export const navigateTool = tool({
   description: `Navigate within the SkyPrint app. ONLY use when the user's request clearly maps to one of the listed app pages. Do NOT call this tool for:
@@ -37,8 +40,85 @@ Route meanings:
   }),
 });
 
+function scoreAirlineStatic(code: string) {
+  const data = AIRLINE_DATA[code];
+  if (!data) return null;
+  const categories = computeCategories(data);
+  const overallScore = computeOverallScore(categories);
+  return {
+    airlineCode: code,
+    airlineName: data.name,
+    region: data.region,
+    overallScore,
+    overallGrade: scoreToGrade(overallScore),
+    categories,
+    fleet: {
+      totalAircraft: data.fleet.totalAircraft,
+      averageAge: data.fleet.averageAge,
+    },
+    safPercent: data.safPercent,
+    contrailProgramActive: data.contrailProgramActive,
+  };
+}
+
+export const getAirlineRankingsTool = tool({
+  description:
+    "Fetch live climate rankings for ALL supported airlines: scores, grades, fleet summary, SAF adoption, contrail program status. Use when the user asks about airline rankings, comparisons across multiple airlines, who's the greenest/worst, or best-in-class examples. Returns an array sorted by overallScore descending.",
+  inputSchema: z.object({
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .optional()
+      .describe("Max airlines to return (defaults to all)"),
+    region: z
+      .enum(["North America", "Europe", "Asia Pacific", "Middle East", "Latin America", "Africa"])
+      .optional()
+      .describe("Filter to a single region"),
+  }),
+  execute: async ({ limit, region }) => {
+    const all = getSupportedAirlines()
+      .map(scoreAirlineStatic)
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+      .filter((x) => !region || x.region === region)
+      .sort((a, b) => b.overallScore - a.overallScore);
+    return limit ? all.slice(0, limit) : all;
+  },
+});
+
+export const getAirlineDetailTool = tool({
+  description:
+    "Fetch the full climate profile for a SINGLE airline by IATA code (e.g. UA, DL, BA, LH, AF, EK, QF). Returns score breakdown across fleet efficiency, route optimization, contrail mitigation, and SAF adoption — plus fleet composition. Use when the user names a specific airline.",
+  inputSchema: z.object({
+    airlineCode: z
+      .string()
+      .length(2)
+      .describe("Two-letter IATA airline code, e.g. UA, DL, BA"),
+  }),
+  execute: async ({ airlineCode }) => {
+    const scored = scoreAirlineStatic(airlineCode.toUpperCase());
+    if (!scored) {
+      return {
+        error: `Unknown airline code: ${airlineCode}. Supported codes: ${getSupportedAirlines().join(", ")}`,
+      };
+    }
+    const data = AIRLINE_DATA[airlineCode.toUpperCase()];
+    return {
+      ...scored,
+      fleetBreakdown: data.fleet.aircraftTypes.map((t) => ({
+        type: t.type,
+        count: t.count,
+        fuelEfficiencyLPer100PaxKm: t.fuelEfficiency,
+      })),
+    };
+  },
+});
+
 export const aeroTools = {
   navigate: navigateTool,
+  getAirlineRankings: getAirlineRankingsTool,
+  getAirlineDetail: getAirlineDetailTool,
   getImpactEquivalent: tool({
     description:
       "Convert CO2 and contrail impact into human-relatable equivalents",

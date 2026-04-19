@@ -1,4 +1,4 @@
-import type { PhotonEventType, PhotonEventPayload, NotificationContent } from "@/lib/types/photon";
+import type { PhotonEventType, PhotonEventPayload, NotificationContent, GreenerAlternative } from "@/lib/types/photon";
 import { formatCo2 } from "@/lib/utils/format";
 import { co2ToTrees, co2ToCarMiles } from "@/lib/utils/units";
 
@@ -9,6 +9,8 @@ export function renderTemplate(
   switch (eventType) {
     case "flight_booked":
       return renderFlightBooked(payload);
+    case "greener_alternative":
+      return renderGreenerAlternative(payload);
     case "pre_flight_24h":
       return renderPreFlight(payload);
     case "post_flight":
@@ -36,6 +38,39 @@ function renderFlightBooked(payload: PhotonEventPayload): NotificationContent {
       .filter(Boolean)
       .join(" "),
     channel: "in_app",
+  };
+}
+
+function renderGreenerAlternative(payload: PhotonEventPayload): NotificationContent {
+  const alt = payload.greenerAlt;
+  if (!alt) {
+    return {
+      subject: "A greener option exists",
+      body: "We found a lower-impact flight on your route. Open SkyPrint to compare.",
+      channel: "push",
+    };
+  }
+
+  const priceLine = alt.altPrice && alt.bookedPrice
+    ? alt.altPrice < alt.bookedPrice
+      ? ` for $${alt.altPrice} (saves you $${alt.bookedPrice - alt.altPrice})`
+      : alt.altPrice === alt.bookedPrice
+        ? ` at the same price`
+        : ` for $${alt.altPrice}`
+    : "";
+
+  const co2Saved = alt.bookedCo2Kg - alt.altCo2Kg;
+
+  return {
+    subject: `🌿 A greener flight exists — ${alt.origin} → ${alt.destination}`,
+    body: [
+      `You booked ${alt.bookedAirline} ${alt.bookedFlightNumber}${alt.bookedPrice ? ` for $${alt.bookedPrice}` : ""} (${formatCo2(alt.bookedCo2Kg)}).`,
+      `But ${alt.altAirline} ${alt.altFlightNumber} flies the same route${priceLine} with ${Math.round(alt.impactReductionPct)}% less climate impact — that's ${formatCo2(co2Saved)} saved.`,
+      alt.compareUrl
+        ? `Compare them: ${alt.compareUrl}`
+        : "Open SkyPrint to see the full comparison.",
+    ].join("\n\n"),
+    channel: "push",
   };
 }
 

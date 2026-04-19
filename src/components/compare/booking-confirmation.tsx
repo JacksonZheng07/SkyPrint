@@ -13,6 +13,7 @@ interface BookingConfirmationProps {
   onCancel: () => void;
   isBooking: boolean;
   isBooked: boolean;
+  greenerAltIncluded?: boolean;
 }
 
 // Mock price derived from flight duration (minutes)
@@ -27,6 +28,7 @@ export function BookingConfirmation({
   onCancel,
   isBooking,
   isBooked,
+  greenerAltIncluded,
 }: BookingConfirmationProps) {
   const price = computeMockPrice(item.flight.duration);
 
@@ -50,7 +52,7 @@ export function BookingConfirmation({
             <StatusStrip isBooked={isBooked} />
             <CardContent className="pt-6">
               {isBooked ? (
-                <BookingSuccess impactSummary={impactSummary} onClose={onCancel} />
+                <BookingSuccess impactSummary={impactSummary} onClose={onCancel} greenerAltIncluded={greenerAltIncluded} />
               ) : (
                 <BookingForm
                   item={item}

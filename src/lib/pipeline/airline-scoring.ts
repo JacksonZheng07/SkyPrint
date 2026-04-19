@@ -14,22 +14,29 @@ export function computeFleetEfficiency(fleet: FleetProfile): number {
     fleet.aircraftTypes.reduce((sum, t) => sum + t.fuelEfficiency * t.count, 0) / totalCount;
 
   const efficiencyScore =
-    ((WORST_EFFICIENCY - avgEfficiency) / (WORST_EFFICIENCY - BEST_EFFICIENCY)) * 80;
-  const ageBonus = (AGE_PENALTY_PIVOT - fleet.averageAge) * 2;
+    ((WORST_EFFICIENCY - avgEfficiency) / (WORST_EFFICIENCY - BEST_EFFICIENCY)) * 85;
+  const ageBonus = (AGE_PENALTY_PIVOT - fleet.averageAge) * 3;
   return Math.max(0, Math.min(100, efficiencyScore + ageBonus));
 }
 
 /**
  * Graduated contrail mitigation score.
- * Active formal program (like UA with Google) -> 65
- * No program -> 25
+ * Active formal program (UA/Google, BA/NATS, LH, JL/Breakthrough) -> 92
+ * No program -> 32
  */
 export function computeContrailMitigation(active: boolean): number {
-  return active ? 65 : 25;
+  return active ? 92 : 32;
 }
 
 export function computeSustainableFuelScore(safPercent: number): number {
-  return Math.min(100, safPercent * 20);
+  // Stepped scale — rewards early adopters aggressively
+  if (safPercent >= 1.2) return 88;
+  if (safPercent >= 1.0) return 82;
+  if (safPercent >= 0.8) return 75;
+  if (safPercent >= 0.5) return 65;
+  if (safPercent >= 0.3) return 50;
+  if (safPercent >= 0.1) return 30;
+  return 12;
 }
 
 /** Emissions trajectory: active contrail programs signal improving trend. */
@@ -37,9 +44,11 @@ export function computeEmissionsTrajectory(
   contrailProgramActive: boolean,
   fleetAge: number,
 ): number {
-  if (contrailProgramActive) return 65;
-  if (fleetAge < 10) return 60;
-  return 45;
+  if (contrailProgramActive && fleetAge < 12) return 90;
+  if (contrailProgramActive) return 78;
+  if (fleetAge < 8) return 72;
+  if (fleetAge < 12) return 58;
+  return 40;
 }
 
 /** Spec weights: contrail 30%, fuel 25%, SAF 20%, route 15%, trajectory 10%. */
@@ -55,13 +64,13 @@ export function computeOverallScore(
   );
 }
 
-/** Tier labels per spec. */
+/** Tier labels — aligned with plus/minus grade boundaries from grades.ts. */
 export function scoreToTier(score: number): string {
-  if (score >= 75) return "Sky Saints";
-  if (score >= 60) return "Clean Cruisers";
-  if (score >= 45) return "Middle of the Pack";
-  if (score >= 30) return "Greenwash Gold Medalists";
-  return "Contrail Criminals";
+  if (score >= 80) return "Sky Saints";         // A- and above
+  if (score >= 65) return "Clean Cruisers";     // B- and above
+  if (score >= 50) return "Middle of the Pack"; // C and above
+  if (score >= 35) return "Greenwash Gold Medalists"; // D and above
+  return "Contrail Criminals";                  // below D
 }
 
 export function computeCategories(data: AirlineStaticData): AirlineScore["categories"] {

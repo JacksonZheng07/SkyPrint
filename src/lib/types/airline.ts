@@ -11,8 +11,19 @@ export interface AirlineScore {
     routeOptimization: number;    // weight 15%
     emissionsTrajectory: number;  // weight 10%
   };
+  safPercent: number;
   narrative: string; // K2 Think generated explanation
+  report: AirlineReport; // K2 Think full report, local fallback if K2 unavailable
   fleetProfile: FleetProfile;
+}
+
+export interface AirlineReport {
+  executiveSummary: string;
+  contrailAnalysis: string;
+  fleetAssessment: string;
+  safOutlook: string;
+  recommendations: string[];
+  gradeJustification: string;
 }
 
 export interface FleetProfile {

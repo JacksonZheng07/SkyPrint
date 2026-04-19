@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { FlightSelection } from "@/components/shared/flight-picker";
+import { AirlineLogo } from "@/components/compare/airline-logo";
 import { ICAO_TO_IATA } from "@/lib/utils/airports";
 
 interface ManifestFlight {
@@ -29,6 +30,17 @@ const AIRLINE_NAMES: Record<string, string> = {
   DLH: "Lufthansa",
   AFR: "Air France",
   KLM: "KLM Royal Dutch Airlines",
+};
+
+const ICAO_TO_AIRLINE_IATA: Record<string, string> = {
+  AAL: "AA",
+  BAW: "BA",
+  DAL: "DL",
+  UAL: "UA",
+  VIR: "VS",
+  DLH: "LH",
+  AFR: "AF",
+  KLM: "KL",
 };
 
 const PER_PAGE = 10;
@@ -153,10 +165,10 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
                       : "border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.08]"
                   }`}
                 >
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
-                    isSelected ? "bg-emerald-500/20 text-emerald-300" : "bg-white/[0.06] text-white/60"
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg overflow-hidden ${
+                    isSelected ? "bg-emerald-500/20" : "bg-white/[0.06]"
                   }`}>
-                    {f.airline}
+                    <AirlineLogo code={ICAO_TO_AIRLINE_IATA[f.airline] ?? f.airline} size={28} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

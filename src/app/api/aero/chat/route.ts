@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: aeroTools,
-      stopWhen: stepCountIs(3),
+      stopWhen: stepCountIs(6),
     });
 
     return result.toUIMessageStreamResponse();
