@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/compare", label: "Purchase Flights" },
   { href: "/simulate", label: "Simulate" },
   { href: "/airlines", label: "Airlines", matchPrefix: "/airline" },
+  { href: "/playground", label: "Playground" },
   { href: "/mission", label: "About" },
 ];
 
