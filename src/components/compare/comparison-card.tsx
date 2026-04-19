@@ -68,7 +68,7 @@ export function ComparisonCard({
                 {flight.airline || flight.airlineCode}
               </p>
               <p className="text-xs text-white/50">
-                {flight.airlineCode} {flight.flightNumber}
+                {flight.flightNumber}
               </p>
             </div>
           </div>
