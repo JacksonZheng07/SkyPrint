@@ -7,6 +7,7 @@ import type { FlightComparisonItem } from "@/lib/types/comparison";
 import { formatContrailRisk, formatCo2, formatDuration } from "@/lib/utils/format";
 import { ContrailBlocks } from "./contrail-blocks";
 import { ScoreCircle } from "./score-circle";
+import { ImpactTooltip } from "./impact-tooltip";
 
 interface ComparisonCardProps {
   item: FlightComparisonItem;
@@ -152,7 +153,15 @@ export function ComparisonCard({
 
             {/* Total Impact Score + badge */}
             <div className="ml-auto flex items-center gap-3">
-              <ScoreCircle score={item.totalImpactScore} size="sm" label="Total Impact" />
+              <div className="flex flex-col items-center gap-0.5">
+                <ScoreCircle score={item.totalImpactScore} size="sm" label="Total Impact" />
+                <ImpactTooltip
+                  co2Kg={contrail.co2Kg}
+                  contrailScore={metrics.impactScore}
+                  totalScore={item.totalImpactScore}
+                  usedFallback={contrail.usedFallback}
+                />
+              </div>
 
               <div className="flex flex-col gap-1 min-w-[110px]">
                 {badge && (
