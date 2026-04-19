@@ -60,7 +60,7 @@ export default function SimulatePage() {
   const [destination, setDestination] = useState("LHR");
   const [date, setDate] = useState(todayISO());
   const [aircraftType, setAircraftType] = useState<AircraftType>("B789");
-  const [cruiseAlt, setCruiseAlt] = useState(35000);
+  const cruiseAlt = 35000;
   const [resultTab, setResultTab] = useState<"baseline" | "optimized">("baseline");
   const [isNight, setIsNight] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export default function SimulatePage() {
     if (!hasSimulatedOnce.current) return;
     triggerSimulate(origin, destination, date, aircraftType, cruiseAlt, isNight);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aircraftType, date, cruiseAlt]);
+  }, [aircraftType, date]);
 
   // When result arrives: draw routes + update map risk for current tab
   useEffect(() => {
@@ -331,24 +331,7 @@ export default function SimulatePage() {
               <span className="text-[10px] text-white/30">{selectedAircraft?.label ?? ""}</span>
             </div>
 
-            {/* Cruise Altitude */}
-            <div className="flex flex-col gap-0.5 border-b border-white/10 px-5 py-4 lg:border-b-0 lg:border-r">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">Cruise Alt (ft)</span>
-              <div className="flex items-center gap-2">
-                <svg className="h-4 w-4 shrink-0 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-4.5L16.5 16.5m0 0L12 12m4.5 4.5V3" />
-                </svg>
-                <span className="text-lg font-bold text-white">{cruiseAlt.toLocaleString()}</span>
-              </div>
-              <input type="range" min={28000} max={42000} step={1000} value={cruiseAlt}
-                onChange={(e) => setCruiseAlt(Number(e.target.value))}
-                className="mt-1 w-full accent-emerald-500" />
-              <span className={`text-[9px] font-medium ${cruiseAlt >= 35000 ? "text-red-400" : cruiseAlt >= 32000 ? "text-amber-400" : "text-emerald-400"}`}>
-                {cruiseAlt >= 35000 ? "High contrail zone" : cruiseAlt >= 32000 ? "Moderate zone" : "Low contrail zone"}
-              </span>
-            </div>
-
-            {/* Day / Night toggle */}
+{/* Day / Night toggle */}
             <div className="flex flex-col gap-0.5 border-b border-white/10 px-5 py-4 lg:border-b-0 lg:border-r">
               <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">Time of Day</span>
               <button

@@ -330,48 +330,62 @@ export function getDemoContrailPrediction(
   };
 }
 
-export function getDemoSimulationResult(numWaypoints: number = 20) {
-  const baseline = getDemoContrailPrediction("baseline-demo", "B789", numWaypoints);
+export function getDemoSimulationResult(numWaypoints: number = 20, isNight: boolean = false, routeKey: string = "baseline-demo") {
+  // Night: no shortwave cancellation → ~38% more contrail warming
+  const nightMultiplier = isNight ? 1.38 : 1.0;
 
-  // Optimized version: reduce contrail formation by adjusting altitudes
-  const optimized: ContrailPrediction = {
+  const baseline = getDemoContrailPrediction(routeKey, "B789", numWaypoints);
+
+  const scaledBaseline: ContrailPrediction = {
     ...baseline,
-    flightId: "optimized-demo",
-    waypointResults: baseline.waypointResults.map((wp) => ({
+    summary: {
+      ...baseline.summary,
+      contrailProbability: Math.min(0.98, baseline.summary.contrailProbability * nightMultiplier),
+      totalEnergyForcingJ: baseline.summary.totalEnergyForcingJ * nightMultiplier,
+      meanRfNetWM2: baseline.summary.meanRfNetWM2 * nightMultiplier,
+      maxContrailLifetimeHours: baseline.summary.maxContrailLifetimeHours * (isNight ? 1.25 : 1.0),
+    },
+  };
+
+  const efReductionFraction = isNight ? 0.82 : 0.78;
+
+  const optimized: ContrailPrediction = {
+    ...scaledBaseline,
+    flightId: `${routeKey}-optimized`,
+    waypointResults: scaledBaseline.waypointResults.map((wp, i) => ({
       ...wp,
-      sacSatisfied: wp.sacSatisfied && Math.random() > 0.6,
+      sacSatisfied: wp.sacSatisfied && seededRandom(i * 13 + 3) > 0.55,
       persistent: false,
-      rfNetWM2: wp.rfNetWM2 ? wp.rfNetWM2 * 0.2 : 0,
+      rfNetWM2: 0,
       contrailAgeHours: null,
       efJPerM: null,
     })),
     summary: {
-      contrailProbability: baseline.summary.contrailProbability * 0.3,
-      totalEnergyForcingJ: baseline.summary.totalEnergyForcingJ * 0.2,
-      meanRfNetWM2: baseline.summary.meanRfNetWM2 * 0.25,
+      contrailProbability: scaledBaseline.summary.contrailProbability * (1 - efReductionFraction * 0.9),
+      totalEnergyForcingJ: scaledBaseline.summary.totalEnergyForcingJ * (1 - efReductionFraction),
+      meanRfNetWM2: scaledBaseline.summary.meanRfNetWM2 * (1 - efReductionFraction),
       maxContrailLifetimeHours: 0,
     },
-    co2Kg: Math.round(baseline.co2Kg * 1.015), // Slight fuel penalty
+    co2Kg: Math.round(scaledBaseline.co2Kg * 1.015),
   };
 
-  // Generate altitude adjustments for waypoints that had contrails
-  const adjustments = baseline.waypointResults
+  const adjustments = scaledBaseline.waypointResults
     .map((wp, i) => ({ wp, i }))
     .filter(({ wp }) => wp.persistent)
     .map(({ i }) => ({
       waypointIndex: i,
       originalAltitudeFt: 35000,
-      suggestedAltitudeFt: 35000 + (Math.random() > 0.5 ? -2000 : 2000),
-      reason: Math.random() > 0.5 ? "Avoid ice-supersaturated layer" : "Exit persistent contrail zone",
+      suggestedAltitudeFt: 35000 + (seededRandom(i * 17) > 0.5 ? -2000 : 2000),
+      reason: seededRandom(i * 23) > 0.5 ? "Avoid ice-supersaturated layer" : "Exit persistent contrail zone",
     }));
 
   return {
-    baseline,
+    baseline: scaledBaseline,
     optimized,
     altitudeAdjustments: adjustments,
     efReductionPercent: Math.round(
-      (1 - optimized.summary.totalEnergyForcingJ / (baseline.summary.totalEnergyForcingJ || 1)) * 100
+      (1 - optimized.summary.totalEnergyForcingJ / (scaledBaseline.summary.totalEnergyForcingJ || 1)) * 100
     ),
-    fuelPenaltyPercent: 1.5,
+    fuelPenaltyPercent: isNight ? 1.8 : 1.5,
   };
 }
