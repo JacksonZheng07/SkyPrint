@@ -1,58 +1,81 @@
 /**
- * Photon iMessage delivery client.
- *
- * Uses macOS AppleScript to send iMessages directly through the local
- * Messages.app. This avoids external service dependencies and works
- * out of the box on any Mac signed into iMessage.
+ * Spectrum-ts client for Photon notification delivery via iMessage.
+ * Singleton instance — lazily initialized on first use.
  */
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { Spectrum, text, type SpectrumInstance } from "spectrum-ts";
+import { imessage } from "spectrum-ts/providers/imessage";
 
-const exec = promisify(execFile);
+let _spectrum: SpectrumInstance | null = null;
+let _initPromise: Promise<SpectrumInstance> | null = null;
+
+async function initSpectrum(): Promise<SpectrumInstance> {
+  const projectId = process.env.PHOTON_PROJECT_ID;
+  const projectSecret = process.env.PHOTON_PROJECT_SECRET;
+
+  if (!projectId || !projectSecret) {
+    throw new Error("PHOTON_PROJECT_ID and PHOTON_PROJECT_SECRET required");
+  }
+
+  const app = await Spectrum({
+    projectId,
+    projectSecret,
+    providers: [imessage.config()],
+  });
+
+  return app;
+}
+
+export async function getSpectrumClient(): Promise<SpectrumInstance> {
+  if (_spectrum) return _spectrum;
+  if (!_initPromise) {
+    _initPromise = initSpectrum().then((app) => {
+      _spectrum = app;
+      return app;
+    });
+  }
+  return _initPromise;
+}
+
+/** Normalize any phone input to +1XXXXXXXXXX for Spectrum. */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return phone.startsWith("+") ? phone : `+${digits}`;
+}
 
 /**
- * Send an iMessage via macOS Messages.app (AppleScript).
+ * Send a notification to a user via iMessage through Spectrum.
  */
 export async function sendIMessage(
   phoneNumber: string,
   subject: string,
   body: string
 ): Promise<void> {
+  const app = await getSpectrumClient();
+  const im = imessage(app);
+  const user = await im.user(normalizePhone(phoneNumber));
+  const space = await im.space(user);
+
   const message = subject ? `${subject}\n\n${body}` : body;
-  await sendViaAppleScript(phoneNumber, message);
+  await space.send(text(message));
 }
 
 /**
- * Send with a small delay to simulate typing for a more natural feel.
+ * Send a notification with typing indicator for a more natural feel.
  */
 export async function sendIMessageWithTyping(
   phoneNumber: string,
   subject: string,
   body: string
 ): Promise<void> {
+  const app = await getSpectrumClient();
+  const im = imessage(app);
+  const user = await im.user(normalizePhone(phoneNumber));
+  const space = await im.space(user);
+
   const message = subject ? `✈️ ${subject}\n\n${body}` : body;
-  // Brief pause to feel like a real message, not an instant bot reply
-  await new Promise((r) => setTimeout(r, 1500));
-  await sendViaAppleScript(phoneNumber, message);
-}
-
-async function sendViaAppleScript(
-  phoneNumber: string,
-  message: string
-): Promise<void> {
-  // Normalize phone number to E.164-ish format
-  const normalized = phoneNumber.replace(/[\s\-\(\)]/g, "");
-  const target = normalized.startsWith("+") ? normalized : `+1${normalized}`;
-
-  // Escape for AppleScript string literal
-  const escaped = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-
-  const script = `
-tell application "Messages"
-  set targetService to 1st account whose service type = iMessage
-  set targetBuddy to participant "${target}" of targetService
-  send "${escaped}" to targetBuddy
-end tell`;
-
-  await exec("osascript", ["-e", script]);
+  await space.responding(async () => {
+    await space.send(text(message));
+  });
 }

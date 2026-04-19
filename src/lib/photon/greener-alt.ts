@@ -1,4 +1,4 @@
-import type { FlightComparison, FlightComparisonItem } from "@/lib/types/comparison";
+import type { FlightComparison } from "@/lib/types/comparison";
 import type { GreenerAlternative } from "@/lib/types/photon";
 
 /**

@@ -11,7 +11,7 @@ import { formatDuration, formatContrailRisk, formatCo2 } from "@/lib/utils/forma
 import { useAero } from "@/hooks/use-aero";
 import { usePhoton } from "@/hooks/use-photon";
 import { calculateImpactSummary } from "@/lib/pipeline/impact";
-import { deriveAirlineEco, type DerivedAirlineEco } from "@/lib/pipeline/airline-eco";
+import { deriveAirlineEco } from "@/lib/pipeline/airline-eco";
 
 const FUEL_KG_TO_LITERS = 0.32;
 const CO2_PER_TREE_KG = 21;

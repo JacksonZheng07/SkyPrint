@@ -8,10 +8,8 @@ import type { AirlineScore } from "@/lib/types/airline";
 import {
   getTierColor,
   scoreToPlusMinusGrade,
-  pmGradeBaseGrade,
   pmGradeBg,
   pmGradeBorder,
-  GRADE_STYLES,
 } from "@/lib/utils/grades";
 import { HorizontalCategoryBars } from "./category-bars";
 

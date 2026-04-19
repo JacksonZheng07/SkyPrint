@@ -5,13 +5,9 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AirlineScore } from "@/lib/types/airline";
 import {
-  GRADE_STYLES,
   getTierColor,
   scoreToPlusMinusGrade,
-  pmGradeBaseGrade,
   pmGradeBg,
-  pmGradeLabel,
-  pmGradeLabelColor,
 } from "@/lib/utils/grades";
 import { VerticalCategoryBars } from "./category-bars";
 

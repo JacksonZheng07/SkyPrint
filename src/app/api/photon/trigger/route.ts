@@ -5,7 +5,7 @@ import { buildGreenerAlternative } from "@/lib/photon/greener-alt";
 import type { PhotonEvent } from "@/lib/types/photon";
 import type { FlightComparison } from "@/lib/types/comparison";
 
-const GREENER_ALT_DELAY_MS = 60_000; // 1 minute
+const GREENER_ALT_DELAY_MS = 15_000; // 15 seconds
 
 export async function POST(request: NextRequest) {
   try {

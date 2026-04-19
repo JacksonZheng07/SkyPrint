@@ -1,4 +1,4 @@
-import type { PhotonEventType, PhotonEventPayload, NotificationContent, GreenerAlternative } from "@/lib/types/photon";
+import type { PhotonEventType, PhotonEventPayload, NotificationContent } from "@/lib/types/photon";
 import { formatCo2 } from "@/lib/utils/format";
 import { co2ToTrees, co2ToCarMiles } from "@/lib/utils/units";
 

@@ -5,7 +5,6 @@ import {
   pmGradeBaseGrade,
   pmGradeLabel,
   GRADE_STYLES,
-  type PlusMinusGrade,
 } from "@/lib/utils/grades";
 
 export interface DerivedAirlineEco {

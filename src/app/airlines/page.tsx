@@ -14,7 +14,6 @@ import {
   pmGradeBaseGrade,
   pmGradeLabel,
   pmGradeBg,
-  pmGradeBorder,
   pmGradeLabelColor,
   percentileLabel,
 } from "@/lib/utils/grades";
@@ -236,7 +235,6 @@ export default function AirlinesPage() {
 function ReportCard({ airline, rank, totalAirlines }: { airline: AirlineScore; rank: number; totalAirlines: number }) {
   const pmGrade = scoreToPlusMinusGrade(airline.overallScore);
   const base = pmGradeBaseGrade(pmGrade);
-  const style = GRADE_STYLES[base];
 
   return (
     <div className="space-y-6">
@@ -283,8 +281,6 @@ function ReportCard({ airline, rank, totalAirlines }: { airline: AirlineScore; r
             const meta = CATEGORY_META[key];
             const value = airline.categories[key];
             const catGrade = scoreToPlusMinusGrade(value);
-            const catBase = pmGradeBaseGrade(catGrade);
-            const catStyle = GRADE_STYLES[catBase];
 
             return (
               <div key={key} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">

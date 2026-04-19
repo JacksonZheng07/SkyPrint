@@ -7,7 +7,6 @@ import type { PlaygroundMapHandle } from "@/app/playground/components/Playground
 import { useSimulation } from "@/hooks/use-simulation";
 import type { AircraftType } from "@/lib/types/flight";
 import type { SimulationResult } from "@/lib/types/comparison";
-import { formatCo2 } from "@/lib/utils/format";
 
 const PlaygroundMap = dynamic(
   () => import("@/app/playground/components/PlaygroundMap"),
@@ -88,6 +87,7 @@ export default function SimulatePage() {
   useEffect(() => {
     if (!hasSimulatedOnce.current) return;
     triggerSimulate(origin, destination, date, aircraftType, cruiseAlt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aircraftType, date, cruiseAlt]);
 
   // When simulation result arrives, show both routes on the map
@@ -100,6 +100,7 @@ export default function SimulatePage() {
     mapRef.current?.showBaselineRoute(o, d);
     // Optimized route (green solid) — animated
     mapRef.current?.showRoute(o, d, effectiveDate, 10);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
   // Quick simulation flights
@@ -465,7 +466,7 @@ function SimulationResults({
   onTabChange: (t: "baseline" | "optimized") => void;
   isLoading?: boolean;
 }) {
-  const { baseline, optimized, efReductionPercent, fuelPenaltyPercent } = result;
+  const { baseline, optimized } = result;
   const co2Delta = optimized.co2Kg - baseline.co2Kg;
   const co2DeltaPct = baseline.co2Kg > 0 ? (co2Delta / baseline.co2Kg) * 100 : 0;
   const contrailBaselineRisk = baseline.summary.contrailProbability;
