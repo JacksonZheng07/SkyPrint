@@ -10,25 +10,25 @@ const orbVariants = {
   idle: {
     scale: [1, 1.03, 1],
     boxShadow: [
-      "0 0 6px rgba(30, 64, 175, 0.3), 0 0 12px rgba(56, 189, 248, 0.15)",
-      "0 0 10px rgba(30, 64, 175, 0.4), 0 0 20px rgba(56, 189, 248, 0.25)",
-      "0 0 6px rgba(30, 64, 175, 0.3), 0 0 12px rgba(56, 189, 248, 0.15)",
+      "0 0 8px rgba(0, 255, 255, 0.4), 0 0 20px rgba(56, 189, 248, 0.3), 0 0 30px rgba(139, 92, 246, 0.15)",
+      "0 0 12px rgba(139, 92, 246, 0.4), 0 0 24px rgba(0, 255, 255, 0.3), 0 0 35px rgba(56, 189, 248, 0.2)",
+      "0 0 8px rgba(56, 189, 248, 0.4), 0 0 20px rgba(139, 92, 246, 0.3), 0 0 30px rgba(0, 255, 255, 0.15)",
     ],
     transition: { repeat: Infinity, duration: 3, ease: "easeInOut" as const },
   },
   listening: {
     scale: [1, 1.04, 1],
-    boxShadow: "0 0 12px rgba(30, 64, 175, 0.4), 0 0 20px rgba(56, 189, 248, 0.3)",
+    boxShadow: "0 0 14px rgba(0, 255, 255, 0.5), 0 0 28px rgba(139, 92, 246, 0.35)",
     transition: { repeat: Infinity, duration: 0.8 },
   },
   speaking: {
     scale: [1, 1.03, 0.98, 1],
-    boxShadow: "0 0 10px rgba(30, 64, 175, 0.35), 0 0 16px rgba(56, 189, 248, 0.2)",
+    boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 24px rgba(0, 255, 255, 0.3)",
     transition: { repeat: Infinity, duration: 0.6 },
   },
   explaining: {
     scale: 0.97,
-    boxShadow: "0 0 8px rgba(30, 64, 175, 0.3), 0 0 14px rgba(56, 189, 248, 0.2)",
+    boxShadow: "0 0 10px rgba(0, 255, 255, 0.4), 0 0 20px rgba(56, 189, 248, 0.3)",
     transition: { duration: 0.3 },
   },
 };
@@ -52,17 +52,19 @@ export function AeroOrb() {
         whileTap={{ scale: 0.95 }}
       >
         <motion.div
-          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ring-2 ring-blue-900/60"
+          className="aero-ring-wrapper"
           variants={orbVariants}
           animate={state.status}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/AeroImage.png" alt="Aero" className="h-full w-full scale-[2] -translate-y-[3px] rounded-full object-cover" />
+          <div className="relative z-10 h-12 w-12 overflow-hidden rounded-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/AeroImage.png" alt="Aero" className="h-full w-full scale-[1.95] translate-y-[4px] rounded-full object-cover" />
+          </div>
         </motion.div>
 
         {isStreaming && (
           <motion.div
-            className="absolute h-12 w-12 rounded-full border-2 border-blue-800/50"
+            className="absolute h-14 w-14 rounded-full border-2 border-cyan-400/50"
             animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
           />

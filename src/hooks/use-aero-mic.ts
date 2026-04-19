@@ -4,88 +4,75 @@ import { useCallback, useRef, useState } from "react";
 
 interface UseAeroMicOptions {
   onTranscript: (text: string) => void;
-  onError: (error: string) => void;
-}
-
-// Minimal interface covering the Web Speech API surface we use,
-// since SpeechRecognition may not be in all TypeScript dom lib versions.
-interface ISpeechRecognition extends EventTarget {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onstart: (() => void) | null;
-  onend: (() => void) | null;
-  onresult: ((event: { results: { [index: number]: { [index: number]: { transcript: string } } } }) => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  start(): void;
-  stop(): void;
-}
-
-type SRConstructor = new () => ISpeechRecognition;
-
-function getSpeechRecognition(): SRConstructor | undefined {
-  if (typeof window === "undefined") return undefined;
-  const w = window as unknown as Record<string, unknown>;
-  return (w["SpeechRecognition"] ?? w["webkitSpeechRecognition"]) as SRConstructor | undefined;
+  onError?: (err: string) => void;
 }
 
 export function useAeroMic({ onTranscript, onError }: UseAeroMicOptions) {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  const toggle = useCallback(() => {
-    const SR = getSpeechRecognition();
-
-    if (!SR) {
-      onError("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      return;
-    }
-
+  const start = useCallback(async () => {
     try {
-      const recognition = new SR();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      chunksRef.current = [];
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        setIsProcessing(false);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
-      recognition.onresult = (event) => {
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
         setIsListening(false);
         setIsProcessing(true);
-        const transcript = event.results[0]?.[0]?.transcript ?? "";
-        if (transcript.trim()) onTranscript(transcript.trim());
-        setIsProcessing(false);
-      };
 
-      recognition.onerror = (event) => {
-        setIsListening(false);
-        setIsProcessing(false);
-        if (event.error !== "aborted") {
-          onError(
-            event.error === "not-allowed"
-              ? "Microphone access denied."
-              : `Speech recognition error: ${event.error}`
-          );
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const ext = mimeType === "audio/webm" ? "webm" : "mp4";
+        const formData = new FormData();
+        formData.append("audio", blob, `audio.${ext}`);
+
+        try {
+          const res = await fetch("/api/aero/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.text?.trim()) {
+            onTranscript(data.text.trim());
+          } else {
+            onError?.("No speech detected.");
+          }
+        } catch {
+          onError?.("Transcription failed.");
+        } finally {
+          setIsProcessing(false);
         }
       };
 
-      recognition.onend = () => setIsListening(false);
-
-      recognitionRef.current = recognition;
-      recognition.start();
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsListening(true);
     } catch {
-      onError("Failed to start microphone.");
+      onError?.("Microphone access denied.");
+      setIsListening(false);
     }
-  }, [isListening, onTranscript, onError]);
+  }, [onTranscript, onError]);
+
+  const stop = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (isListening) stop();
+    else start();
+  }, [isListening, start, stop]);
 
   return { isListening, isProcessing, toggle };
 }

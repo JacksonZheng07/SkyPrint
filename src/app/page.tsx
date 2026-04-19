@@ -21,8 +21,6 @@ export default function Home() {
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-        {/* Bottom fade for seamless transition into next section */}
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-48 bg-gradient-to-t from-black/90 to-transparent" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20">
           <div className="max-w-2xl space-y-5">
@@ -89,14 +87,10 @@ export default function Home() {
 
       {/* ===== FROM ALTITUDE TO IMPACT — over Tree.png ===== */}
       <section
-        className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative min-h-screen overflow-hidden bg-cover bg-fixed bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/Tree.png')" }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/30" />
-        {/* Top fade — blends hero into this section */}
-        <div className="absolute inset-x-0 top-0 z-[1] h-40 bg-gradient-to-b from-black/80 to-transparent" />
-        {/* Bottom fade — blends into next section */}
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-40 bg-gradient-to-t from-black/80 to-transparent" />
 
         <motion.div
           className="relative z-10 px-4 py-28"
@@ -183,12 +177,10 @@ export default function Home() {
       {/* ===== HOW SKYPRINT WORKS — over BelowHero.png ===== */}
       <section
         id="how-it-works"
-        className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative min-h-screen overflow-hidden bg-cover bg-fixed bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/BelowHero.png')" }}
       >
         <div className="absolute inset-0 bg-black/60" />
-        <div className="absolute inset-x-0 top-0 z-[1] h-40 bg-gradient-to-b from-black/80 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-40 bg-gradient-to-t from-black/80 to-transparent" />
 
         <motion.div
           className="relative z-10 px-4 py-24"
@@ -306,11 +298,10 @@ export default function Home() {
 
       {/* ===== STATS BAR — over FooterImage.png ===== */}
       <section
-        className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative min-h-screen overflow-hidden bg-cover bg-fixed bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/FooterImage.png')" }}
       >
         <div className="absolute inset-0 bg-slate-900/60" />
-        <div className="absolute inset-x-0 top-0 z-[1] h-40 bg-gradient-to-b from-black/80 to-transparent" />
         <motion.div
           className="relative z-10 px-4 py-24"
           initial="hidden"

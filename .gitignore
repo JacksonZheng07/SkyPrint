@@ -93,3 +93,5 @@ next-env.d.ts
 *.sqlite3
 *.db
 *.dump
+
+/.claude/
