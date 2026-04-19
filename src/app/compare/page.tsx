@@ -25,7 +25,6 @@ export default function ComparePage() {
   const [impactSummary, setImpactSummary] = useState<ImpactSummary | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("best");
 
-  // Sort flights based on active filter
   const sortedComparison = useMemo(() => {
     if (!comparison) return null;
     const sorted = [...comparison.flights];
@@ -40,7 +39,6 @@ export default function ComparePage() {
         sorted.sort((a, b) => a.flight.duration - b.flight.duration);
         break;
       case "tradeoff": {
-        // Balance warming ratio and price: 60% warming, 40% price (normalized)
         const prices = sorted.map((f) => f.flight.price).filter((p): p is number => typeof p === "number");
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
         sorted.sort((a, b) => {
@@ -52,7 +50,7 @@ export default function ComparePage() {
         });
         break;
       }
-      default: // "best" — keep original rank order
+      default:
         sorted.sort((a, b) => a.rank - b.rank);
         break;
     }
@@ -120,64 +118,72 @@ export default function ComparePage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-8">
-      <AeroTrigger comparison={comparison} />
+    <div
+      className="relative -mt-14 min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: "url('/BuyTicket.png')" }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
 
-      <div>
-        <h1 className="text-3xl font-bold">Purchase Flights</h1>
-        <p className="mt-2 text-muted-foreground">
-          Search flights and compare their total climate impact — CO₂ and
-          contrail radiative forcing.
-        </p>
-      </div>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6 px-4 pb-12 pt-28 sm:px-8">
+        <AeroTrigger comparison={comparison} />
 
-      <FlightSearch onSearch={compare} isLoading={isLoading} />
-
-      {!comparison && !isLoading && (
-        <QuickRoutes onSearch={compare} isLoading={isLoading} />
-      )}
-
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-          {error}
+        <div>
+          <h1 className="text-4xl font-bold text-white">Purchase Flights</h1>
+          <p className="mt-2 text-white/60">
+            Search flights and compare their total climate impact —
+            CO₂ and contrail radiative forcing.
+          </p>
         </div>
-      )}
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              Analyzing flight routes, weather data, and contrail formation...
-            </p>
+        <FlightSearch onSearch={compare} isLoading={isLoading} />
+
+        {!comparison && !isLoading && (
+          <QuickRoutes onSearch={compare} isLoading={isLoading} />
+        )}
+
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 backdrop-blur-sm">
+            {error}
           </div>
-        </div>
-      )}
+        )}
 
-      {sortedComparison && !isLoading && (
-        <>
-          <FlightFilters value={sortKey} onChange={setSortKey} />
-          <ComparisonGrid
-            comparison={sortedComparison}
-            onSelectFlight={handleSelectFlight}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-emerald-400 border-t-transparent" />
+              <p className="mt-4 text-sm text-white/50">
+                Analyzing flight routes, weather data, and contrail formation...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {sortedComparison && !isLoading && (
+          <>
+            <FlightFilters value={sortKey} onChange={setSortKey} />
+            <ComparisonGrid
+              comparison={sortedComparison}
+              onSelectFlight={handleSelectFlight}
+            />
+          </>
+        )}
+
+        {selectedFlight && (
+          <BookingConfirmation
+            item={selectedFlight}
+            impactSummary={impactSummary}
+            onConfirm={handleConfirmBooking}
+            onCancel={() => {
+              setSelectedFlight(null);
+              setIsBooked(false);
+              setImpactSummary(null);
+            }}
+            isBooking={isBooking}
+            isBooked={isBooked}
           />
-        </>
-      )}
-
-      {selectedFlight && (
-        <BookingConfirmation
-          item={selectedFlight}
-          impactSummary={impactSummary}
-          onConfirm={handleConfirmBooking}
-          onCancel={() => {
-            setSelectedFlight(null);
-            setIsBooked(false);
-            setImpactSummary(null);
-          }}
-          isBooking={isBooking}
-          isBooked={isBooked}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 }

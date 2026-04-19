@@ -13,14 +13,13 @@ export function ScoreCircle({ score, size = "sm", label }: ScoreCircleProps) {
   const displayScore = formatImpactScore(score);
   const normalized = Math.min(score, 100) / 100;
 
-  // Color based on 0-10 display scale (lower is better)
   const displayVal = score / 10;
   const color =
     displayVal <= 4
-      ? "text-emerald-600 stroke-emerald-500"
+      ? "text-emerald-400 stroke-emerald-400"
       : displayVal <= 7
-        ? "text-amber-500 stroke-amber-400"
-        : "text-red-600 stroke-red-500";
+        ? "text-amber-400 stroke-amber-400"
+        : "text-red-400 stroke-red-400";
 
   const dim = size === "lg" ? 96 : 56;
   const strokeWidth = size === "lg" ? 4 : 3;
@@ -31,16 +30,14 @@ export function ScoreCircle({ score, size = "sm", label }: ScoreCircleProps) {
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: dim, height: dim }}>
         <svg width={dim} height={dim} className="-rotate-90">
-          {/* Background ring */}
           <circle
             cx={dim / 2}
             cy={dim / 2}
             r={radius}
             fill="none"
             strokeWidth={strokeWidth}
-            className="stroke-muted"
+            className="stroke-white/10"
           />
-          {/* Score ring */}
           <motion.circle
             cx={dim / 2}
             cy={dim / 2}
@@ -64,7 +61,7 @@ export function ScoreCircle({ score, size = "sm", label }: ScoreCircleProps) {
             {displayScore}
           </span>
           <span
-            className={`text-muted-foreground ${
+            className={`text-white/40 ${
               size === "lg" ? "text-xs" : "text-[9px]"
             }`}
           >
@@ -73,7 +70,7 @@ export function ScoreCircle({ score, size = "sm", label }: ScoreCircleProps) {
         </div>
       </div>
       {label && (
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xs text-white/50">{label}</span>
       )}
     </div>
   );

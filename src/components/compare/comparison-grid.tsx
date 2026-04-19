@@ -24,7 +24,6 @@ export function ComparisonGrid({ comparison, onSelectFlight }: ComparisonGridPro
 
   function handleCompareSelected() {
     if (selectedIds.length === 2) {
-      // Store comparison data in sessionStorage for the detail page
       sessionStorage.setItem("skyprint_comparison", JSON.stringify(comparison));
       router.push(`/compare/detail?a=${selectedIds[0]}&b=${selectedIds[1]}`);
     }
@@ -32,27 +31,36 @@ export function ComparisonGrid({ comparison, onSelectFlight }: ComparisonGridPro
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-white">
             We found {comparison.flights.length} options
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {comparison.origin} → {comparison.destination} &middot; Avg{" "}
+          <p className="flex items-center gap-1 text-sm text-white/50">
+            {comparison.origin} &rarr; {comparison.destination} &middot; Avg{" "}
             {comparison.averageCo2Kg}kg CO₂/pax
+            <svg className="h-3.5 w-3.5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <circle cx={12} cy={12} r={10} />
+              <path strokeLinecap="round" d="M12 16v-4m0-4h.01" />
+            </svg>
           </p>
         </div>
-      </div>
 
-      {comparison.warmingSpreadPct > 10 && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
-          <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-            The lowest-impact option today reduces estimated warming by{" "}
-            <span className="font-bold">{comparison.warmingSpreadPct}%</span>{" "}
-            versus the most climate-damaging flight shown.
-          </p>
-        </div>
-      )}
+        {comparison.warmingSpreadPct > 10 && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2.5 backdrop-blur-sm">
+            <svg className="h-5 w-5 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-white/80">
+              The lowest-impact option today reduces estimated warming by{" "}
+              <span className="font-bold text-emerald-400">
+                {comparison.warmingSpreadPct}%
+              </span>{" "}
+              versus the most climate-damaging flight shown.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
         {comparison.flights.map((item, index) => (
@@ -67,11 +75,6 @@ export function ComparisonGrid({ comparison, onSelectFlight }: ComparisonGridPro
           />
         ))}
       </div>
-
-      {/* Footnote */}
-      <p className="text-xs text-muted-foreground text-center pt-2">
-        Contrail impact is the leading factor in our total impact score.
-      </p>
 
       {/* Compare selected floating bar */}
       {selectedIds.length === 2 && (
