@@ -33,7 +33,25 @@ export function registerMapLayers(map: mapboxgl.Map): void {
     id: MAP_LAYERS.issrFill,
     type: "fill",
     source: MAP_SOURCES.issrOverlay,
-    paint: { "fill-color": MAP_COLORS.issrFill, "fill-opacity": 0 },
+    paint: {
+      "fill-color": MAP_COLORS.issrFill,
+      "fill-opacity": 0,
+      "fill-opacity-transition": { duration: 1500, delay: 0 },
+    },
+  });
+
+  // Soft feathered edge: wide blurred line traces the polygon border
+  map.addLayer({
+    id: MAP_LAYERS.issrEdge,
+    type: "line",
+    source: MAP_SOURCES.issrOverlay,
+    paint: {
+      "line-color": MAP_COLORS.issrFill,
+      "line-width": 28,
+      "line-blur": 22,
+      "line-opacity": 0,
+      "line-opacity-transition": { duration: 1800, delay: 200 },
+    },
   });
 
   map.addLayer({

@@ -21,6 +21,7 @@ export function IssrScene({ data }: { data: FlightAnalysis }) {
           field="metadata.data_sources.weather"
           source={weatherSource}
           url="https://cds.climate.copernicus.eu/"
+          equation={"SAC: G = cp(T−Tmix) / (EI_H₂O·Q·η)\nISSR: q > qsat,ice(T, p)"}
         />
       </p>
     </div>

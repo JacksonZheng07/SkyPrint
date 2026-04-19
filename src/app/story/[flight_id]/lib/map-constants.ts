@@ -15,6 +15,7 @@ export const MAP_SOURCES = {
 
 export const MAP_LAYERS = {
   issrFill: "issr-fill",
+  issrEdge: "issr-edge",
   trackActualLine: "track-actual-line",
   trackActualIssrLine: "track-actual-issr-line",
   trackCounterfactualLine: "track-counterfactual-line",

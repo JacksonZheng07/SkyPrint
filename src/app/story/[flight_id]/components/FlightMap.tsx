@@ -118,7 +118,8 @@ const FlightMap = forwardRef<FlightMapHandle, FlightMapProps>(function FlightMap
       const map = mapRef.current;
       if (!map || !loadedRef.current) return;
       setSourceData(map, MAP_SOURCES.issrOverlay, geojson);
-      map.setPaintProperty(MAP_LAYERS.issrFill, "fill-opacity", 0.55);
+      map.setPaintProperty(MAP_LAYERS.issrFill, "fill-opacity", 0.45);
+      map.setPaintProperty(MAP_LAYERS.issrEdge, "line-opacity", 0.6);
       map.setPaintProperty(MAP_LAYERS.trackActualIssrLine, "line-opacity", 1);
       map.setPaintProperty(MAP_LAYERS.trackActualLine, "line-opacity", 0.4);
       map.easeTo({ center: [-35, 48], zoom: 3.2, duration: 800 });

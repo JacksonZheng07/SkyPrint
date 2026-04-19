@@ -33,6 +33,7 @@ export function CounterfactualScene({ data }: { data: FlightAnalysis }) {
         <FootnoteRef
           field="totals.avoidable_warming_tco2e"
           source={data.totals.avoidable_warming_tco2e.source}
+          equation={"ΔW = RF_baseline − RF_optimal\ntCO₂e via GWP* (Cain et al. 2019)"}
         />
       </p>
       <p className="text-xs text-zinc-500">

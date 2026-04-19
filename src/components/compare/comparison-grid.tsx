@@ -36,10 +36,21 @@ export function ComparisonGrid({ comparison, onSelectFlight }: ComparisonGridPro
           <h2 className="text-xl font-semibold text-white">
             {comparison.flights.length} flights found
           </h2>
-          <p className="flex items-center gap-2 text-sm text-white/50">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-white/50">
             <span>{comparison.origin} &rarr; {comparison.destination}</span>
             <span className="text-white/20">&middot;</span>
             <span>Avg {Math.round(comparison.averageCo2Kg)} kg CO₂/pax</span>
+            {comparison.worstOption.contrail.co2Kg - comparison.bestOption.contrail.co2Kg > 50 && (
+              <>
+                <span className="text-white/20">&middot;</span>
+                <span>
+                  <span className="text-emerald-400 font-medium">{Math.round(comparison.bestOption.contrail.co2Kg)}</span>
+                  <span className="text-white/30"> – </span>
+                  <span className="text-red-400 font-medium">{Math.round(comparison.worstOption.contrail.co2Kg)}</span>
+                  <span> kg CO₂e range</span>
+                </span>
+              </>
+            )}
             <span className="text-white/20">&middot;</span>
             <span className="text-white/40">Select 2 to compare side-by-side</span>
           </p>

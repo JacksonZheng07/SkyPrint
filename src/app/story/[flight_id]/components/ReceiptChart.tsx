@@ -50,16 +50,12 @@ export function ReceiptChart({ data }: ReceiptChartProps) {
           fill: "fill",
           sort: { y: null },
           order: "order",
-          tip: true,
-          title: (d: (typeof bars)[number]) => `${d.category}: ${d.value.toFixed(1)} tCO₂e`,
         }),
         // What the airline reports (CO₂ only)
         Plot.barX([{ value: co2, fill: "#3B82F6" }], {
           x: "value",
           y: () => "Booking site",
           fill: "fill",
-          tip: true,
-          title: () => `CO₂ only: ${co2.toFixed(1)} tCO₂e`,
         }),
         // CI error bar on total
         Plot.link(
@@ -105,6 +101,7 @@ export function ReceiptChart({ data }: ReceiptChartProps) {
           <FootnoteRef
             field="totals.actual.co2_fuel_kg"
             source={t.co2_fuel_kg.source}
+            equation={"CO₂ = fuel_burn × EI_CO₂\nEI_CO₂ = 3.16 kg / kg fuel"}
           />
         </span>
         <span className="flex items-center gap-1.5">
@@ -113,6 +110,7 @@ export function ReceiptChart({ data }: ReceiptChartProps) {
           <FootnoteRef
             field="totals.actual.contrail_forcing_tco2e"
             source={t.contrail_forcing_tco2e.source}
+            equation={"RF_net = RF_lw − RF_sw\nμ₀ = cos(solar zenith angle)\nRF_sw = 0 at night (μ₀→0)"}
           />
         </span>
         <span className="flex items-center gap-1.5">
