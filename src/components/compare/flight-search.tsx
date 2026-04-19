@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +15,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState("");
+  const [passengers, setPassengers] = useState(1);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,7 +36,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
             <Label htmlFor="origin">From</Label>
             <Input
               id="origin"
-              placeholder="JFK"
+              placeholder="New York (JFK)"
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
               maxLength={3}
@@ -47,7 +47,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
             <Label htmlFor="destination">To</Label>
             <Input
               id="destination"
-              placeholder="LAX"
+              placeholder="London (LHR)"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               maxLength={3}
@@ -55,7 +55,7 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
             />
           </div>
           <div className="flex-1">
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">Depart</Label>
             <Input
               id="date"
               type="date"
@@ -63,9 +63,24 @@ export function FlightSearch({ onSearch, isLoading }: FlightSearchProps) {
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
-          <Button type="submit" disabled={isLoading || !origin || !destination || !date}>
-            {isLoading ? "Searching..." : "Compare Flights"}
-          </Button>
+          <div className="w-24">
+            <Label htmlFor="passengers">Passengers</Label>
+            <Input
+              id="passengers"
+              type="number"
+              min={1}
+              max={9}
+              value={passengers}
+              onChange={(e) => setPassengers(Number(e.target.value))}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !origin || !destination || !date}
+            className="inline-flex h-10 items-center justify-center rounded-full bg-emerald-600 px-6 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isLoading ? "Searching..." : "Search"}
+          </button>
         </form>
       </CardContent>
     </Card>

@@ -31,3 +31,7 @@ export function formatNumber(n: number): string {
 export function formatPercent(n: number): string {
   return `${Math.round(n * 100)}%`;
 }
+
+export function formatImpactScore(score: number): string {
+  return (score / 10).toFixed(1);
+}

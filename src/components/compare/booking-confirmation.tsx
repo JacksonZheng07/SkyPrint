@@ -20,6 +20,11 @@ interface BookingConfirmationProps {
   isBooked: boolean;
 }
 
+// Mock price derived from flight duration
+function getMockPrice(durationMin: number): number {
+  return Math.round(durationMin * 1.5 + 50);
+}
+
 export function BookingConfirmation({
   item,
   impactSummary,
@@ -28,9 +33,15 @@ export function BookingConfirmation({
   isBooking,
   isBooked,
 }: BookingConfirmationProps) {
-  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [zip, setZip] = useState("");
+
   const risk = formatContrailRisk(item.metrics.riskRating);
-  const isBest = item.rank === 1;
+  const price = getMockPrice(item.flight.duration);
 
   return (
     <AnimatePresence>
@@ -46,7 +57,7 @@ export function BookingConfirmation({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md"
+          className="w-full max-w-md max-h-[90vh] overflow-y-auto"
         >
           <Card className="overflow-hidden shadow-2xl">
             {/* Status strip */}
@@ -54,9 +65,7 @@ export function BookingConfirmation({
               className={`h-2 ${
                 isBooked
                   ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                  : isBest
-                    ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                    : "bg-gradient-to-r from-sky-400 to-blue-400"
+                  : "bg-gradient-to-r from-sky-400 to-blue-400"
               }`}
             />
             <CardContent className="pt-6">
@@ -69,110 +78,154 @@ export function BookingConfirmation({
                     transition={{ type: "spring", stiffness: 200 }}
                     className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
                   >
-                    <span className="text-3xl">✅</span>
+                    <svg className="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                   </motion.div>
-                  <h3 className="text-xl font-bold">Flight Selected!</h3>
-                  <p className="text-sm text-muted-foreground">
-                    You&apos;ll receive notifications about your flight&apos;s climate impact via iMessage.
-                  </p>
+                  <div>
+                    <h3 className="text-xl font-bold">Booking Confirmed</h3>
+                    <p className="text-sm text-muted-foreground">
+                      We&apos;ll notify you and track your impact after your flight.
+                    </p>
+                  </div>
                   {impactSummary && impactSummary.co2Saved > 0 && (
                     <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
                       <p className="font-semibold text-green-700 dark:text-green-400">
-                        🌳 You saved {formatCo2(impactSummary.co2Saved)} vs the worst option!
+                        You saved {formatCo2(impactSummary.co2Saved)} vs the worst option!
                       </p>
                       <p className="mt-1 text-sm text-green-600 dark:text-green-500">
-                        That&apos;s {co2ToTrees(impactSummary.co2Saved)} trees absorbing CO2 for a year,
+                        That&apos;s {co2ToTrees(impactSummary.co2Saved)} trees absorbing CO₂ for a year,
                         or {co2ToCarMiles(impactSummary.co2Saved)} fewer car miles.
                       </p>
                     </div>
                   )}
                   <div className="space-y-1 text-xs text-muted-foreground">
-                    <p>📱 Booking confirmation → Now</p>
-                    <p>🌤️ Pre-flight contrail forecast → 24h before departure</p>
-                    <p>📊 Post-flight impact summary → After landing</p>
+                    <p>Booking confirmation → Now</p>
+                    <p>Pre-flight contrail forecast → 24h before departure</p>
+                    <p>Post-flight impact summary → After landing</p>
                   </div>
                   <Button onClick={onCancel} className="w-full">
                     Done
                   </Button>
                 </div>
               ) : (
-                /* Booking form */
+                /* KNOT Booking form */
                 <div className="space-y-5">
-                  <div>
-                    <h3 className="text-xl font-bold">Confirm Flight Selection</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Get climate impact notifications via iMessage
-                    </p>
-                  </div>
-
-                  {/* Flight summary */}
-                  <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+                  {/* KNOT branding + flight summary */}
+                  <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-semibold">
-                        {item.flight.airlineCode} {item.flight.flightNumber}
-                      </span>
-                      <p className="text-xs text-muted-foreground">{item.flight.airline}</p>
+                      <h3 className="text-lg font-bold">KNOT</h3>
+                      <p className="text-xs text-muted-foreground">Secure Booking</p>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm">
-                        {item.flight.origin} → {item.flight.destination}
-                      </span>
-                      <div className="flex gap-1.5 justify-end mt-1">
-                        {isBest && (
-                          <Badge className="bg-green-600 text-white text-[10px]">Cleanest</Badge>
-                        )}
-                        <Badge variant="outline" className={`text-[10px] ${risk.color}`}>
-                          {risk.label}
-                        </Badge>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                      <p className="text-2xl font-bold">${price}</p>
+                    </div>
+                  </div>
+
+                  {/* Route info */}
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-semibold text-sm">
+                          {item.flight.airline || `${item.flight.airlineCode} ${item.flight.flightNumber}`}
+                        </span>
+                        <p className="text-xs text-muted-foreground">
+                          {item.flight.origin} → {item.flight.destination}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${risk.color}`}>
+                        {risk.label}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Passenger Details */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold">Passenger Details</h4>
+                    <div>
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Payment */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold">Payment</h4>
+                    <div>
+                      <Label htmlFor="card">Card Number</Label>
+                      <Input
+                        id="card"
+                        placeholder="4242 4242 4242 4242"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label htmlFor="expiry">Expiry</Label>
+                        <Input
+                          id="expiry"
+                          placeholder="12/28"
+                          value={expiry}
+                          onChange={(e) => setExpiry(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvv">CVV</Label>
+                        <Input
+                          id="cvv"
+                          placeholder="123"
+                          value={cvv}
+                          onChange={(e) => setCvv(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="zip">Zip Code</Label>
+                        <Input
+                          id="zip"
+                          placeholder="10001"
+                          value={zip}
+                          onChange={(e) => setZip(e.target.value)}
+                        />
                       </div>
                     </div>
                   </div>
 
-                  {/* Impact metrics */}
-                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                    <div className="rounded-lg bg-muted/50 p-2">
-                      <p className="font-bold">{formatCo2(item.contrail.co2Kg)}</p>
-                      <p className="text-[10px] text-muted-foreground">CO2</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 p-2">
-                      <p className="font-bold">
-                        {Math.round(item.contrail.summary.contrailProbability * 100)}%
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">Contrail Risk</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 p-2">
-                      <p className="font-bold">{item.totalImpactScore}</p>
-                      <p className="text-[10px] text-muted-foreground">Impact</p>
-                    </div>
-                  </div>
+                  {/* Actions */}
+                  <button
+                    onClick={() => onConfirm(email)}
+                    disabled={isBooking}
+                    className="w-full rounded-lg bg-emerald-600 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {isBooking ? "Processing..." : `Pay $${price}`}
+                  </button>
 
-                  {/* Phone number input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number (for iMessage notifications)</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Powered by Photon — you&apos;ll get pre-flight forecasts and post-flight impact summaries.
-                    </p>
-                  </div>
+                  <p className="text-center text-[10px] text-muted-foreground">
+                    Secure booking powered by Knot
+                  </p>
 
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={onCancel} className="flex-1">
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={() => onConfirm(phone)}
-                      disabled={isBooking}
-                      className="flex-1"
-                    >
-                      {isBooking ? "Confirming..." : "Confirm & Track"}
-                    </Button>
-                  </div>
+                  <button
+                    onClick={onCancel}
+                    className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
               )}
             </CardContent>

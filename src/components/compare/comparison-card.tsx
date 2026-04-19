@@ -2,43 +2,60 @@
 
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import type { FlightComparisonItem } from "@/lib/types/comparison";
 import { formatContrailRisk, formatCo2, formatDuration } from "@/lib/utils/format";
-import { ImpactBreakdown } from "./impact-breakdown";
+import { ContrailBlocks } from "./contrail-blocks";
+import { ScoreCircle } from "./score-circle";
 
 interface ComparisonCardProps {
   item: FlightComparisonItem;
   isBest: boolean;
   index: number;
+  selected?: boolean;
   onSelect?: (item: FlightComparisonItem) => void;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function ComparisonCard({ item, isBest, index, onSelect }: ComparisonCardProps) {
+export function ComparisonCard({
+  item,
+  isBest,
+  index,
+  selected,
+  onSelect,
+  onToggleSelect,
+}: ComparisonCardProps) {
   const { flight, contrail, metrics } = item;
   const risk = formatContrailRisk(metrics.riskRating);
   const isWorst = item.rank === 4 || metrics.riskRating === "high";
 
+  const riskDotColor =
+    metrics.riskRating === "low"
+      ? "bg-emerald-500"
+      : metrics.riskRating === "medium"
+        ? "bg-amber-400"
+        : "bg-red-500";
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.3, delay: index * 0.08 }}
     >
       <Card
-        className={
+        className={`overflow-hidden transition-all hover:shadow-md ${
           isBest
-            ? "border-2 border-green-500 shadow-md shadow-green-500/10"
-            : isWorst
-              ? "border border-red-200 dark:border-red-900"
-              : "border"
-        }
+            ? "border-2 border-emerald-500 shadow-sm shadow-emerald-500/10"
+            : selected
+              ? "border-2 border-sky-500"
+              : isWorst
+                ? "border border-red-200 dark:border-red-900"
+                : "border"
+        }`}
       >
-        {/* Rank strip */}
+        {/* Thin rank strip */}
         <div
-          className={`h-1 rounded-t-lg ${
+          className={`h-1 ${
             isBest
               ? "bg-gradient-to-r from-green-400 to-emerald-500"
               : isWorst
@@ -46,99 +63,98 @@ export function ComparisonCard({ item, isBest, index, onSelect }: ComparisonCard
                 : "bg-gradient-to-r from-sky-400 to-blue-400"
           }`}
         />
-        <CardHeader className="pb-3 pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                {item.rank}
-              </span>
-              <span className="text-lg font-semibold">
-                {flight.airlineCode} {flight.flightNumber}
-              </span>
+        <CardContent className="py-3 px-4">
+          <div className="flex items-center gap-4">
+            {/* Checkbox for selection */}
+            {onToggleSelect && (
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={() => onToggleSelect(flight.flightId)}
+                className="h-4 w-4 shrink-0 rounded border-border accent-emerald-600"
+              />
+            )}
+
+            {/* Airline info */}
+            <div className="flex items-center gap-2 min-w-[140px]">
+              <div className={`h-3 w-3 shrink-0 rounded-full ${riskDotColor}`} />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-sm">
+                    {flight.airline || `${flight.airlineCode} ${flight.flightNumber}`}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {flight.airlineCode} {flight.flightNumber}
+                </span>
+              </div>
             </div>
-            <div className="flex gap-1.5">
-              {isBest && (
-                <Badge className="bg-green-600 text-white">Cleanest</Badge>
-              )}
-              <Badge
-                variant="outline"
-                className={risk.color}
-              >
-                {risk.label}
-              </Badge>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {flight.airline} &middot; {flight.aircraftType}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between text-sm">
-            <div>
-              <p className="font-medium">{flight.origin}</p>
-              <p className="text-muted-foreground">
+
+            {/* Route times */}
+            <div className="flex items-center gap-2 min-w-[160px] text-sm">
+              <span className="font-medium">
                 {new Date(flight.departureTime).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                {formatDuration(flight.duration)}
-              </p>
-              <div className="mx-4 mt-1 h-px w-20 bg-border" />
-              <p className="text-xs text-muted-foreground">
-                {flight.stops === 0
-                  ? "Nonstop"
-                  : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium">{flight.destination}</p>
-              <p className="text-muted-foreground">
+              </span>
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] text-muted-foreground">
+                  {formatDuration(flight.duration)}
+                </span>
+                <div className="h-px w-12 bg-border" />
+              </div>
+              <span className="font-medium">
                 {new Date(flight.arrivalTime).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-              </p>
+              </span>
             </div>
+
+            {/* Contrail impact blocks */}
+            <div className="hidden sm:flex flex-col items-center gap-0.5 min-w-[60px]">
+              <ContrailBlocks score={metrics.impactScore} size="sm" />
+              <span className="text-[10px] text-muted-foreground">
+                {risk.label}
+              </span>
+            </div>
+
+            {/* CO2 */}
+            <div className="hidden md:block text-center min-w-[80px]">
+              <p className="text-sm font-semibold">{formatCo2(contrail.co2Kg)}</p>
+              <p className="text-[10px] text-muted-foreground">CO₂ Emissions</p>
+            </div>
+
+            {/* Total Impact Score */}
+            <div className="ml-auto flex items-center gap-3">
+              <ScoreCircle score={item.totalImpactScore} size="sm" label="Total Impact" />
+
+              {/* Badges */}
+              <div className="flex flex-col gap-1 min-w-[80px]">
+                {isBest && (
+                  <Badge className="bg-emerald-600 text-white text-[10px] whitespace-nowrap">
+                    Best Overall
+                  </Badge>
+                )}
+                {isWorst && (
+                  <Badge variant="outline" className="text-red-500 border-red-300 text-[10px] whitespace-nowrap">
+                    Highest Impact
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Select button */}
+            {onSelect && (
+              <button
+                onClick={() => onSelect(item)}
+                className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+              >
+                Select
+              </button>
+            )}
           </div>
-
-          <Separator />
-
-          <ImpactBreakdown
-            co2Kg={contrail.co2Kg}
-            contrailScore={metrics.impactScore}
-            totalScore={item.totalImpactScore}
-          />
-
-          <div className="grid grid-cols-3 gap-2 text-center text-sm">
-            <div className="rounded-lg bg-muted/50 p-2">
-              <p className="font-semibold">{formatCo2(contrail.co2Kg)}</p>
-              <p className="text-xs text-muted-foreground">CO2/pax</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-2">
-              <p className="font-semibold">
-                {Math.round(contrail.summary.contrailProbability * 100)}%
-              </p>
-              <p className="text-xs text-muted-foreground">Contrail Risk</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-2">
-              <p className="font-semibold">{item.totalImpactScore}</p>
-              <p className="text-xs text-muted-foreground">Impact Score</p>
-            </div>
-          </div>
-
-          {onSelect && (
-            <Button
-              className="w-full"
-              variant={isBest ? "default" : "outline"}
-              onClick={() => onSelect(item)}
-            >
-              Select Flight
-            </Button>
-          )}
         </CardContent>
       </Card>
     </motion.div>

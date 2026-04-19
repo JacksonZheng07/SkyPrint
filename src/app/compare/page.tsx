@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlightSearch } from "@/components/compare/flight-search";
+import { FlightFilters, type SortKey } from "@/components/compare/flight-filters";
 import { ComparisonGrid } from "@/components/compare/comparison-grid";
 import { BookingConfirmation } from "@/components/compare/booking-confirmation";
 import { AeroTrigger } from "@/components/aero/aero-trigger";
@@ -21,12 +22,33 @@ export default function ComparePage() {
   const [isBooking, setIsBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [impactSummary, setImpactSummary] = useState<ImpactSummary | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("best");
+
+  // Sort flights based on active filter
+  const sortedComparison = useMemo(() => {
+    if (!comparison) return null;
+    const sorted = [...comparison.flights];
+    switch (sortKey) {
+      case "contrail":
+        sorted.sort((a, b) => a.metrics.impactScore - b.metrics.impactScore);
+        break;
+      case "co2":
+        sorted.sort((a, b) => a.contrail.co2Kg - b.contrail.co2Kg);
+        break;
+      case "shortest":
+        sorted.sort((a, b) => a.flight.duration - b.flight.duration);
+        break;
+      default: // "best" — keep original rank order
+        sorted.sort((a, b) => a.rank - b.rank);
+        break;
+    }
+    return { ...comparison, flights: sorted };
+  }, [comparison, sortKey]);
 
   const handleSelectFlight = useCallback(
     (item: FlightComparisonItem) => {
       setSelectedFlight(item);
       setIsBooked(false);
-      // Trigger Aero to explain the flight
       trigger(
         "flight_selected",
         JSON.stringify({
@@ -46,7 +68,6 @@ export default function ComparePage() {
       setIsBooking(true);
 
       try {
-        // Calculate impact summary (savings vs worst option)
         const worstFlight = comparison.flights[comparison.flights.length - 1];
         const summary = calculateImpactSummary(
           selectedFlight.contrail.co2Kg,
@@ -54,7 +75,6 @@ export default function ComparePage() {
         );
         setImpactSummary(summary);
 
-        // Schedule Photon lifecycle events (booking → pre-flight → post-flight)
         await scheduleBooking({
           userId: "demo-user",
           departureTime: selectedFlight.flight.departureTime,
@@ -68,7 +88,6 @@ export default function ComparePage() {
 
         setIsBooked(true);
 
-        // Trigger Aero to summarize booking
         trigger(
           "booking_complete",
           JSON.stringify({
@@ -87,13 +106,13 @@ export default function ComparePage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 p-8">
+    <div className="mx-auto max-w-7xl space-y-6 p-8">
       <AeroTrigger comparison={comparison} />
 
       <div>
         <h1 className="text-3xl font-bold">Compare Flights</h1>
         <p className="mt-2 text-muted-foreground">
-          Search flights and compare their total climate impact — CO2 and
+          Search flights and compare their total climate impact — CO₂ and
           contrail radiative forcing.
         </p>
       </div>
@@ -111,21 +130,22 @@ export default function ComparePage() {
           <div className="text-center">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <p className="mt-4 text-sm text-muted-foreground">
-              Analyzing flight routes, weather data, and contrail
-              formation...
+              Analyzing flight routes, weather data, and contrail formation...
             </p>
           </div>
         </div>
       )}
 
-      {comparison && !isLoading && (
-        <ComparisonGrid
-          comparison={comparison}
-          onSelectFlight={handleSelectFlight}
-        />
+      {sortedComparison && !isLoading && (
+        <>
+          <FlightFilters value={sortKey} onChange={setSortKey} />
+          <ComparisonGrid
+            comparison={sortedComparison}
+            onSelectFlight={handleSelectFlight}
+          />
+        </>
       )}
 
-      {/* Booking confirmation modal */}
       {selectedFlight && (
         <BookingConfirmation
           item={selectedFlight}

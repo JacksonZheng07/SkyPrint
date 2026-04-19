@@ -18,11 +18,17 @@ export function Footer() {
             <Link href="/simulate" className="hover:text-foreground">
               Simulate
             </Link>
-            <Link href="/mission" className="hover:text-foreground">
-              Mission
+            <Link href="/airlines" className="hover:text-foreground">
+              Airlines
             </Link>
-            <Link href="/daily" className="hover:text-foreground">
-              Daily
+            <Link href="/dashboard" className="hover:text-foreground">
+              Impact
+            </Link>
+            <Link href="/trips" className="hover:text-foreground">
+              My Trips
+            </Link>
+            <Link href="/mission" className="hover:text-foreground">
+              About
             </Link>
           </nav>
         </div>
