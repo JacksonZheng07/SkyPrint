@@ -16,6 +16,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B738",
       duration: 330,
       stops: 0,
+      price: 287,
     },
     {
       flightId: "UA-200-demo",
@@ -29,6 +30,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B789",
       duration: 325,
       stops: 0,
+      price: 312,
     },
     {
       flightId: "DL-300-demo",
@@ -42,6 +44,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "A321",
       duration: 340,
       stops: 0,
+      price: 299,
     },
     {
       flightId: "B6-400-demo",
@@ -55,6 +58,49 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "A320",
       duration: 345,
       stops: 0,
+      price: 219,
+    },
+    {
+      flightId: "NK-510-demo",
+      airline: "Spirit Airlines",
+      airlineCode: "NK",
+      flightNumber: "NK 510",
+      origin: "JFK",
+      destination: "LAX",
+      departureTime: "",
+      arrivalTime: "",
+      aircraftType: "A320",
+      duration: 365,
+      stops: 1,
+      price: 149,
+    },
+    {
+      flightId: "WN-620-demo",
+      airline: "Southwest Airlines",
+      airlineCode: "WN",
+      flightNumber: "WN 620",
+      origin: "JFK",
+      destination: "LAX",
+      departureTime: "",
+      arrivalTime: "",
+      aircraftType: "B738",
+      duration: 380,
+      stops: 1,
+      price: 178,
+    },
+    {
+      flightId: "AS-730-demo",
+      airline: "Alaska Airlines",
+      airlineCode: "AS",
+      flightNumber: "AS 730",
+      origin: "JFK",
+      destination: "LAX",
+      departureTime: "",
+      arrivalTime: "",
+      aircraftType: "B789",
+      duration: 335,
+      stops: 0,
+      price: 329,
     },
   ],
   "JFK-LHR": [
@@ -70,6 +116,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B77W",
       duration: 420,
       stops: 0,
+      price: 742,
     },
     {
       flightId: "AA-106-demo",
@@ -83,6 +130,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B789",
       duration: 415,
       stops: 0,
+      price: 698,
     },
     {
       flightId: "VS-004-demo",
@@ -96,6 +144,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "A359",
       duration: 425,
       stops: 0,
+      price: 765,
     },
   ],
   "SFO-NRT": [
@@ -111,6 +160,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B789",
       duration: 660,
       stops: 0,
+      price: 892,
     },
     {
       flightId: "AA-170-demo",
@@ -124,6 +174,7 @@ const DEMO_ROUTES: Record<string, FlightOption[]> = {
       aircraftType: "B77W",
       duration: 650,
       stops: 0,
+      price: 945,
     },
   ],
 };
@@ -164,14 +215,19 @@ function generateGenericFlights(
     { code: "AA", name: "American Airlines", type: "B738" as const },
     { code: "UA", name: "United Airlines", type: "B789" as const },
     { code: "DL", name: "Delta Air Lines", type: "A321" as const },
+    { code: "WN", name: "Southwest Airlines", type: "B738" as const },
+    { code: "B6", name: "JetBlue Airways", type: "A320" as const },
+    { code: "NK", name: "Spirit Airlines", type: "A320" as const },
   ];
 
   return airlines.map((a, i) => {
-    const depDate = new Date(`${date}T${String(7 + i * 4).padStart(2, "0")}:00:00Z`);
-    const duration = 180 + Math.floor(Math.random() * 120);
+    const hour = 6 + i * 2 + Math.floor(seededRandom(i * 37) * 3);
+    const depDate = new Date(`${date}T${String(Math.min(hour, 22)).padStart(2, "0")}:${i % 2 === 0 ? "00" : "30"}:00Z`);
+    const duration = 150 + Math.floor(seededRandom(i * 53) * 200);
     const arrDate = new Date(depDate.getTime() + duration * 60000);
+    const stops = i >= 4 ? 1 : i >= 3 ? (seededRandom(i * 71) > 0.5 ? 1 : 0) : 0;
     return {
-      flightId: `${a.code}-${100 + i}-demo`,
+      flightId: `${a.code}-${100 + i * 50}-demo`,
       airline: a.name,
       airlineCode: a.code,
       flightNumber: `${a.code} ${100 + i * 50}`,
@@ -181,7 +237,8 @@ function generateGenericFlights(
       arrivalTime: arrDate.toISOString(),
       aircraftType: a.type,
       duration,
-      stops: 0,
+      stops,
+      price: 120 + Math.floor(seededRandom(i * 91) * 300),
     };
   });
 }
@@ -202,8 +259,14 @@ export function getDemoContrailPrediction(
     flightId.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) +
     aircraftType.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
-  const baseProb = 0.15 + seededRandom(seed) * 0.6;
-  const baseRf = 0.0002 + seededRandom(seed + 1) * 0.0015;
+  // Wider spread: some flights are clean, some are dirty
+  const rng = seededRandom(seed);
+  const baseProb = rng < 0.2 ? 0.08 + rng * 0.3   // ~20% chance: low risk
+                 : rng < 0.5 ? 0.45 + rng * 0.4   // ~30% chance: medium risk
+                 :              0.75 + rng * 0.25;  // ~50% chance: high risk
+  const baseRf = rng < 0.2 ? 0.0003 + seededRandom(seed + 1) * 0.0008
+               : rng < 0.5 ? 0.0015 + seededRandom(seed + 1) * 0.002
+               :              0.004 + seededRandom(seed + 1) * 0.006;
 
   // Newer aircraft types have lower impact
   const efficiencyFactor =
@@ -228,7 +291,7 @@ export function getDemoContrailPrediction(
     A35K: 225,
     E190: 120,
   };
-  const co2Kg = (co2Base[aircraftType] ?? 200) * (0.9 + seededRandom(seed + 2) * 0.2);
+  const co2Kg = (co2Base[aircraftType] ?? 200) * (0.7 + seededRandom(seed + 2) * 0.6);
 
   const waypointResults = Array.from({ length: numWaypoints }, (_, i) => {
     const f = i / (numWaypoints - 1);

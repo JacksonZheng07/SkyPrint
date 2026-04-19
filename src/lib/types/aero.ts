@@ -17,6 +17,7 @@ export type AeroAction =
 
 export type AeroPageContext =
   | { page: "compare"; flights: FlightComparison }
+  | { page: "compare-detail"; flightA: Record<string, unknown>; flightB: Record<string, unknown>; betterChoice: string; co2DeltaKg: number; airlineEcoA: string; airlineEcoB: string }
   | { page: "simulate"; baseline: SimulationResult }
   | { page: "airline"; airlineCode: string }
   | { page: "dashboard" }

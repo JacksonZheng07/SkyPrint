@@ -2,11 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useAeroState } from "@/components/aero/aero-provider";
 
 export function useAero() {
   const { state, dispatch, pageContext, setPageContext } = useAeroState();
+  const router = useRouter();
 
   const transport = useMemo(
     () =>
@@ -17,8 +19,19 @@ export function useAero() {
     [pageContext]
   );
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, addToolResult } = useChat({
     transport,
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.toolName === "navigate") {
+        const { route, reason } = toolCall.input as { route: string; reason: string };
+        router.push(route);
+        addToolResult({
+          tool: "navigate",
+          toolCallId: toolCall.toolCallId,
+          output: { success: true, navigatedTo: route, reason },
+        });
+      }
+    },
     onFinish: () => {
       dispatch({ type: "FINISH" });
     },

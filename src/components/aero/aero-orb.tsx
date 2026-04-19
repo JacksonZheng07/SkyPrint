@@ -46,8 +46,12 @@ export function AeroOrb() {
   return (
     <>
       <motion.div
-        className="fixed bottom-6 right-6 z-50 flex cursor-pointer items-center justify-center"
-        onClick={() => setIsPanelOpen(!isPanelOpen)}
+        className="fixed bottom-6 right-6 z-50 flex cursor-grab items-center justify-center active:cursor-grabbing"
+        onTap={() => setIsPanelOpen(!isPanelOpen)}
+        drag
+        dragMomentum={false}
+        dragElastic={0}
+        dragConstraints={{ top: -800, left: -1600, right: 0, bottom: 0 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >

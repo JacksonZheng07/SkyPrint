@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Mic, MicOff, Volume2, VolumeX, X, Loader2 } from "lucide-react";
+import { motion, useDragControls } from "framer-motion";
+import { GripVertical, Mic, MicOff, Volume2, VolumeX, X, Loader2 } from "lucide-react";
 import type { UIMessage } from "ai";
 import { useAero } from "@/hooks/use-aero";
 import { useAeroVoice } from "@/hooks/use-aero-voice";
@@ -21,6 +21,7 @@ export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps)
   const { speak, stop: stopSpeaking, isPlaying } = useAeroVoice();
   const [input, setInput] = useState("");
   const [micError, setMicError] = useState<string | null>(null);
+  const dragControls = useDragControls();
 
   const { isListening, isProcessing, toggle: toggleMic } = useAeroMic({
     onTranscript: (text) => {
@@ -53,11 +54,21 @@ export function AeroPanel({ lastMessage, isStreaming, onClose }: AeroPanelProps)
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
+      drag
+      dragMomentum={false}
+      dragElastic={0}
+      dragListener={false}
+      dragControls={dragControls}
+      dragConstraints={{ top: -600, left: -1200, right: 100, bottom: 100 }}
       className="fixed bottom-24 right-6 z-50 flex w-80 flex-col rounded-2xl border bg-background shadow-xl sm:w-96"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* Header (drag handle) */}
+      <div
+        onPointerDown={(e) => dragControls.start(e)}
+        className="flex cursor-grab items-center justify-between border-b px-4 py-3 active:cursor-grabbing"
+      >
         <div className="flex items-center gap-2">
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
           <div className="h-2 w-2 rounded-full bg-green-500" />
           <span className="text-sm font-medium">Aero</span>
           <span className="text-xs text-muted-foreground">Climate Guide</span>

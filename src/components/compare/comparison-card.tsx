@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { FlightComparisonItem } from "@/lib/types/comparison";
-import { formatContrailRisk, formatDuration } from "@/lib/utils/format";
-import { ScoreCircle } from "./score-circle";
+import { formatDuration } from "@/lib/utils/format";
 import { AirlineLogo } from "./airline-logo";
 
 interface ComparisonCardProps {
@@ -24,15 +23,15 @@ export function ComparisonCard({
   onToggleSelect,
 }: ComparisonCardProps) {
   const { flight, metrics } = item;
-  const risk = formatContrailRisk(metrics.riskRating);
   const badge = getBadge(item, isBest);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.08 }}
-      className={`group relative overflow-hidden rounded-xl border backdrop-blur-xl transition-all ${
+      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
+      onClick={() => onToggleSelect?.(flight.flightId)}
+      className={`group relative cursor-pointer overflow-hidden rounded-xl border backdrop-blur-xl transition-all ${
         isBest
           ? "border-emerald-500/40 bg-emerald-500/10 shadow-lg shadow-emerald-500/5"
           : selected
@@ -121,38 +120,30 @@ export function ComparisonCard({
             </span>
           </div>
 
-          {/* Contrail risk badge */}
-          <div className="hidden md:flex">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
-                metrics.riskRating === "low"
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : metrics.riskRating === "medium"
-                    ? "bg-amber-500/15 text-amber-400"
-                    : "bg-red-500/15 text-red-400"
-              }`}
-            >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                {metrics.riskRating === "low" ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                ) : metrics.riskRating === "medium" ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
-                )}
-              </svg>
-              {risk.label}
+          {/* Price */}
+          {flight.price && (
+            <div className="hidden md:flex">
+              <span className="text-lg font-bold text-white">${flight.price}</span>
+            </div>
+          )}
+
+          {/* CO₂ emissions */}
+          <div className="hidden text-right lg:block min-w-[80px]">
+            <p className="text-[11px] text-white/40">CO₂ Emissions</p>
+            <p className={`text-sm font-bold ${item.contrail.co2Kg > 600 ? "text-red-400" : item.contrail.co2Kg > 400 ? "text-amber-400" : "text-emerald-400"}`}>
+              {Math.round(item.contrail.co2Kg)} kg
+            </p>
+          </div>
+
+          {/* Contrail impact % */}
+          <div className="flex flex-col items-center">
+            <span className={`text-base font-bold ${
+              metrics.impactScore < 25 ? "text-emerald-400" : metrics.impactScore < 60 ? "text-amber-400" : "text-red-400"
+            }`}>
+              {Math.min(100, metrics.impactScore)}%
             </span>
+            <span className="text-[9px] text-white/40">contrail</span>
           </div>
-
-          {/* Total Impact label */}
-          <div className="hidden text-right text-[11px] text-white/40 lg:block min-w-[60px]">
-            <p>Total Impact</p>
-            {item.confidenceLevel === "low" && <p>Est. only</p>}
-          </div>
-
-          {/* Score circle */}
-          <ScoreCircle score={item.totalImpactScore} size="sm" />
 
           {/* Badge */}
           <div className="hidden min-w-[100px] lg:flex lg:justify-end">
@@ -164,22 +155,20 @@ export function ComparisonCard({
           </div>
         </div>
 
-        {/* Impact copy */}
-        {item.impactCopy && (
-          <p className="border-t border-white/5 pt-2.5 text-xs leading-relaxed text-white/50">
-            {item.impactCopy}
-          </p>
-        )}
+        {/* Airline grade + book */}
+        <div className="flex items-center gap-3 border-t border-white/5 pt-2.5">
+          <AirlineGrade code={flight.airlineCode} />
+          <span className="text-xs text-white/40">{flight.airline || flight.airlineCode} Scorecard</span>
+          {onSelect && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelect(item); }}
+              className="ml-auto shrink-0 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
+            >
+              Book This Flight
+            </button>
+          )}
+        </div>
       </div>
-
-      {/* Click to select overlay */}
-      {onSelect && (
-        <button
-          onClick={() => onSelect(item)}
-          className="absolute inset-0 z-10 cursor-pointer opacity-0"
-          aria-label={`Select ${flight.airline || flight.airlineCode} flight`}
-        />
-      )}
     </motion.div>
   );
 }
@@ -229,4 +218,27 @@ function getBadge(
     return { label: "Similar Impact", className: "bg-sky-500/15 text-sky-400/80 border border-sky-500/20" };
   }
   return null;
+}
+
+// Deterministic grade based on airline code
+const AIRLINE_GRADES: Record<string, { grade: string; color: string }> = {
+  AS: { grade: "A", color: "text-emerald-400 bg-emerald-500/15" },
+  DL: { grade: "A-", color: "text-emerald-400 bg-emerald-500/15" },
+  UA: { grade: "B+", color: "text-sky-400 bg-sky-500/15" },
+  B6: { grade: "B", color: "text-sky-400 bg-sky-500/15" },
+  AA: { grade: "C+", color: "text-amber-400 bg-amber-500/15" },
+  WN: { grade: "C", color: "text-amber-400 bg-amber-500/15" },
+  NK: { grade: "D+", color: "text-orange-400 bg-orange-500/15" },
+  BA: { grade: "B+", color: "text-sky-400 bg-sky-500/15" },
+  VS: { grade: "B", color: "text-sky-400 bg-sky-500/15" },
+  NH: { grade: "A-", color: "text-emerald-400 bg-emerald-500/15" },
+};
+
+function AirlineGrade({ code }: { code: string }) {
+  const info = AIRLINE_GRADES[code] ?? { grade: "C", color: "text-amber-400 bg-amber-500/15" };
+  return (
+    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${info.color}`}>
+      {info.grade}
+    </span>
+  );
 }

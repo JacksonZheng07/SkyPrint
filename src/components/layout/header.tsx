@@ -15,8 +15,6 @@ const NAV_ITEMS = [
 export function Header() {
   const pathname = usePathname();
 
-  const isHome = pathname === "/";
-
   return (
     <header className={cn(
       "fixed inset-x-0 top-0 z-50 bg-black/20 backdrop-blur-sm"

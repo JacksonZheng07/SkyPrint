@@ -2,7 +2,43 @@ import { z } from "zod";
 import { tool } from "ai";
 import { co2ToCarMiles, co2ToTrees } from "@/lib/utils/units";
 
+export const navigateTool = tool({
+  description: `Navigate within the SkyPrint app. ONLY use when the user's request clearly maps to one of the listed app pages. Do NOT call this tool for:
+- external places, countries, cities, or real-world locations (e.g. "take me to China", "go to Paris")
+- vague requests with no clear page match
+- small-talk or informational questions
+If there is no clear match, do not call this tool — answer conversationally instead.
+
+Route meanings:
+- /          → home / landing page
+- /compare   → flight comparison search
+- /simulate  → route simulator
+- /airlines  → airline climate rankings
+- /dashboard → user's personal impact dashboard
+- /mission   → about / mission page
+- /trips     → user's past trips
+- /notifications → user notifications
+- /profile   → user profile settings`,
+  inputSchema: z.object({
+    route: z
+      .enum([
+        "/",
+        "/compare",
+        "/simulate",
+        "/airlines",
+        "/dashboard",
+        "/mission",
+        "/trips",
+        "/notifications",
+        "/profile",
+      ])
+      .describe("The SkyPrint app route to navigate to"),
+    reason: z.string().describe("Short human-readable reason matching the user's request"),
+  }),
+});
+
 export const aeroTools = {
+  navigate: navigateTool,
   getImpactEquivalent: tool({
     description:
       "Convert CO2 and contrail impact into human-relatable equivalents",
