@@ -44,20 +44,20 @@ export function PlaygroundBottomBar({
   onPlayToggle,
 }: Props) {
   return (
-    <div className="mx-4 mb-4 rounded-xl border border-white/15 bg-[#070c18]/88 backdrop-blur-[4px] overflow-hidden">
+    <div className="mx-4 mb-4 rounded-2xl border border-white/[0.08] bg-black/40 shadow-2xl shadow-black/30 backdrop-blur-2xl overflow-hidden">
       {/* Layer switcher */}
-      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b border-white/5">
+      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b border-white/[0.06]">
         {LAYERS.map(({ id, label, Icon, available }) => (
           <button
             key={id}
             onClick={() => available && onLayerChange(id)}
             title={available ? undefined : "Requires weather API key"}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               available
                 ? activeLayer === id
-                  ? "bg-white/15 text-white"
-                  : "text-white/50 hover:bg-white/10 hover:text-white/80"
-                : "text-white/20 cursor-not-allowed"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/50 hover:bg-white/[0.06] hover:text-white/80"
+                : "text-white/15 cursor-not-allowed"
             }`}
           >
             <Icon size={12} />
@@ -72,13 +72,13 @@ export function PlaygroundBottomBar({
         <button
           onClick={onPlayToggle}
           disabled={!flightDate}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.06] text-white transition-all hover:bg-white/[0.12] disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {isPlaying ? <Pause size={14} /> : <Play size={14} />}
         </button>
 
         {/* Date + time label */}
-        <span className="shrink-0 text-xs font-medium text-white/70 min-w-[200px]">
+        <span className="shrink-0 text-xs font-medium text-white/60 min-w-[200px]">
           {flightDate ? formatDateTime(flightDate, currentHour) : "Select a flight to explore"}
         </span>
 
@@ -92,9 +92,9 @@ export function PlaygroundBottomBar({
             value={currentHour}
             disabled={!flightDate}
             onChange={(e) => onHourChange(parseFloat(e.target.value))}
-            className="w-full h-1 accent-teal-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+            className="w-full h-1 accent-emerald-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
           />
-          <div className="flex justify-between text-[9px] text-white/30">
+          <div className="flex justify-between text-[9px] text-white/25">
             {[0, 6, 12, 18, 24].map((h) => (
               <span key={h}>{hourLabel(h)}</span>
             ))}
@@ -105,7 +105,7 @@ export function PlaygroundBottomBar({
         <button
           onClick={onAnimate}
           disabled={!flightDate}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:bg-white/15 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-medium text-white/60 transition-all hover:border-white/15 hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <RefreshCw size={12} />
           Animate

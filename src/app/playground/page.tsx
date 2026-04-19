@@ -117,31 +117,30 @@ export default function PlaygroundPage() {
         onProgress={(h) => setCurrentHour(h)}
       />
 
-      {/* Aurora overlay — teal/green glow concentrated around the left panel */}
+      {/* Subtle ambient glow */}
       <div
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 560px 700px at 160px 55%, rgba(45,212,191,0.09) 0%, transparent 70%),
-            radial-gradient(ellipse 280px 400px at 0px 40%,  rgba(16,185,129,0.07) 0%, transparent 65%),
-            radial-gradient(ellipse 900px 300px at 320px 0%, rgba(45,212,191,0.05) 0%, transparent 60%)
+            radial-gradient(ellipse 500px 600px at 160px 50%, rgba(16,185,129,0.06) 0%, transparent 70%),
+            radial-gradient(ellipse 800px 300px at 50% 0%, rgba(16,185,129,0.03) 0%, transparent 60%)
           `,
         }}
       />
 
       {/* Left glass panel — floats over the globe, h-14 spacer clears the navbar */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-80 z-20 flex flex-col backdrop-blur-[10px] border-r border-teal-400/20"
+        className="absolute left-0 top-0 bottom-0 w-80 z-20 flex flex-col backdrop-blur-2xl border-r border-white/[0.08]"
         style={{
-          background: "rgba(8, 14, 28, 0.65)",
-          boxShadow: "inset -1px 0 0 rgba(45,212,191,0.30), 2px 0 48px rgba(45,212,191,0.12), inset 0 0 60px rgba(45,212,191,0.04)",
+          background: "rgba(8, 14, 28, 0.55)",
+          boxShadow: "2px 0 40px rgba(0,0,0,0.3), inset -1px 0 0 rgba(255,255,255,0.06)",
         }}
       >
         {/* Spacer so content doesn't collide with the fixed navbar */}
         <div className="h-14 shrink-0" />
 
-        <div className="border-b border-white/10 px-4 py-4">
-          <h2 className="text-sm font-bold text-white">Flight Playground</h2>
+        <div className="border-b border-white/[0.06] px-4 py-4">
+          <h2 className="text-sm font-bold text-white tracking-tight">Flight Playground</h2>
           <p className="mt-0.5 text-xs text-white/40">
             Pick a flight to model its contrail impact
           </p>

@@ -104,7 +104,7 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
     return (
       <div className="space-y-2 px-1 pt-1">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-white/5 animate-pulse" />
+          <div key={i} className="h-14 rounded-xl border border-white/[0.04] bg-white/[0.03] animate-pulse" />
         ))}
       </div>
     );
@@ -112,7 +112,7 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
 
   if (flights.length === 0) {
     return (
-      <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-center text-sm text-white/50">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-6 text-center text-sm text-white/40">
         No pipeline flights available.
       </div>
     );
@@ -123,15 +123,15 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
       <div className="relative">
         <input
           type="text"
-          placeholder="Search by flight number, airline, or airport…"
+          placeholder="Search flights..."
           value={query}
           onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-          className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-teal-400/50"
+          className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-xs text-white placeholder:text-white/30 backdrop-blur-sm transition-colors focus:border-white/15 focus:bg-white/[0.06] focus:outline-none"
         />
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center text-xs text-white/50">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center text-xs text-white/40">
           No flights match &ldquo;{query}&rdquo;
         </div>
       ) : (
@@ -147,36 +147,28 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
                   key={`${f.icao24}_${f.first_seen}`}
                   onClick={() => handleSelect(f)}
                   disabled={isLoading}
-                  className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                  className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                     isSelected
-                      ? "border border-teal-400/60"
-                      : "bg-white/5 border border-white/0 hover:bg-white/10 hover:border-white/10"
+                      ? "border border-emerald-500/40 bg-emerald-500/10 shadow-lg shadow-emerald-500/5"
+                      : "border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.08]"
                   }`}
-                  style={isSelected ? {
-                    background: "rgba(20, 60, 55, 0.55)",
-                    boxShadow: "0 0 12px rgba(45,212,191,0.35), 0 0 28px rgba(45,212,191,0.18), inset 0 0 16px rgba(45,212,191,0.08)",
-                  } : undefined}
                 >
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-                    isSelected ? "bg-teal-400/30 text-teal-200" : "bg-teal-500/20 text-teal-300"
-                  }`}
-                  style={isSelected ? { boxShadow: "0 0 8px rgba(45,212,191,0.4)" } : undefined}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
+                    isSelected ? "bg-emerald-500/20 text-emerald-300" : "bg-white/[0.06] text-white/60"
+                  }`}>
                     {f.airline}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`font-semibold text-xs ${isSelected ? "text-teal-100" : "text-white"}`}>{f.callsign.trim()}</span>
-                      <span className={`text-[10px] truncate ${isSelected ? "text-teal-300/70" : "text-white/50"}`}>{airlineName}</span>
+                      <span className={`font-semibold text-xs ${isSelected ? "text-emerald-100" : "text-white"}`}>{f.callsign.trim()}</span>
+                      <span className={`text-[10px] truncate ${isSelected ? "text-emerald-300/60" : "text-white/40"}`}>{airlineName}</span>
                     </div>
-                    <div className={`text-[10px] mt-0.5 ${isSelected ? "text-teal-300/50" : "text-white/40"}`}>
-                      {origin} · {dest}
+                    <div className={`text-[10px] mt-0.5 ${isSelected ? "text-emerald-300/40" : "text-white/30"}`}>
+                      {origin} &rarr; {dest}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className={`text-[10px] ${isSelected ? "text-teal-300/60" : "text-white/50"}`}>{formatDate(f.first_seen)}</div>
-                    <div className="text-[10px] font-mono text-white/30 mt-0.5">
-                      {origin} · {dest}
-                    </div>
+                    <div className={`text-[10px] ${isSelected ? "text-emerald-300/50" : "text-white/40"}`}>{formatDate(f.first_seen)}</div>
                   </div>
                 </button>
               );
@@ -204,10 +196,10 @@ export function DarkFlightList({ onSelect, isLoading, selectedCallsign }: Props)
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`flex h-7 w-7 items-center justify-center rounded text-xs transition-colors ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs transition-all ${
                     p === safePage
-                      ? "bg-teal-500/30 text-teal-300 font-medium"
-                      : "text-white/50 hover:bg-white/10"
+                      ? "bg-emerald-500/20 text-emerald-300 font-medium"
+                      : "text-white/40 hover:bg-white/[0.06]"
                   }`}
                 >
                   {p}
