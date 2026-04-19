@@ -153,7 +153,7 @@ function StoryLayout({ data, issrGeojson, activeScene }: StoryLayoutProps) {
           onClick={() => setExploreMode((v) => !v)}
           className="px-3 py-1.5 text-xs font-medium bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded text-white backdrop-blur-sm transition-colors"
         >
-          {exploreMode ? "Exit explore" : "Explore globe"}
+          {exploreMode ? "Exit Playground" : "Playground"}
         </button>
         <button
           onClick={() => {
