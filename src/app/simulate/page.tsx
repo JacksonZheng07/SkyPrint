@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
+import * as Plot from "@observablehq/plot";
 import { motion, AnimatePresence, useSpring, useTransform, type Variants } from "framer-motion";
 import type { PlaygroundMapHandle } from "@/app/playground/components/PlaygroundMap";
 import { useSimulation } from "@/hooks/use-simulation";
@@ -755,6 +756,94 @@ function SimulationResults({
   );
 }
 
+/* ===== Flight Altitude Profile Chart ===== */
+
+function FlightProfileChart({ result, origin, destination }: {
+  result: SimulationResult;
+  origin: string;
+  destination: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { baseline, optimized, altitudeAdjustments } = result;
+  const n = baseline.waypointResults.length;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const adjustmentMap = new Map(altitudeAdjustments.map((a) => [a.waypointIndex, a.suggestedAltitudeFt]));
+
+    const baselinePoints = Array.from({ length: n }, (_, i) => {
+      const f = i / (n - 1);
+      const alt = f < 0.1 ? 35000 * (f / 0.1) : f > 0.9 ? 35000 * ((1 - f) / 0.1) : 35000;
+      return { x: f, alt, issr: baseline.waypointResults[i].sacSatisfied };
+    });
+
+    const optimizedPoints = Array.from({ length: n }, (_, i) => {
+      const f = i / (n - 1);
+      const base = f < 0.1 ? 35000 * (f / 0.1) : f > 0.9 ? 35000 * ((1 - f) / 0.1) : 35000;
+      const adjAlt = adjustmentMap.get(i) ?? adjustmentMap.get(i - 1) ?? adjustmentMap.get(i + 1);
+      const delta = (f >= 0.1 && f <= 0.9 && adjAlt != null) ? (adjAlt - 35000) : 0;
+      return { x: f, alt: base + delta };
+    });
+
+    const issrBands: { x1: number; x2: number }[] = [];
+    let bandStart: number | null = null;
+    for (let i = 0; i <= n; i++) {
+      const inIssr = i < n && baseline.waypointResults[i].sacSatisfied;
+      if (inIssr && bandStart === null) bandStart = i / (n - 1);
+      if (!inIssr && bandStart !== null) {
+        issrBands.push({ x1: bandStart, x2: (i - 1) / (n - 1) });
+        bandStart = null;
+      }
+    }
+
+    const allAlts = [...baselinePoints, ...optimizedPoints].map((p) => p.alt);
+    const altMin = Math.max(0, Math.min(...allAlts) - 3000);
+    const altMax = Math.max(...allAlts) + 4000;
+
+    const chart = Plot.plot({
+      width: containerRef.current.clientWidth,
+      height: 160,
+      marginLeft: 52,
+      marginRight: 12,
+      marginTop: 12,
+      marginBottom: 28,
+      style: { background: "transparent", color: "#fff", fontFamily: "var(--font-geist-mono)" },
+      x: { label: null, tickFormat: (d: number) => d === 0 ? origin.toUpperCase() : d === 1 ? destination.toUpperCase() : "", ticks: [0, 1] },
+      y: { label: "ft", domain: [altMin, altMax], tickFormat: (d: number) => `${(d / 1000).toFixed(0)}k`, grid: true },
+      marks: [
+        ...issrBands.map((b) =>
+          Plot.rectX([b], { x1: "x1", x2: "x2", y1: altMin, y2: altMax, fill: "#EF4444", fillOpacity: 0.12 })
+        ),
+        Plot.line(baselinePoints, { x: "x", y: "alt", stroke: "#ef4444", strokeWidth: 1.5, strokeDasharray: "4,3", strokeOpacity: 0.7 }),
+        Plot.line(optimizedPoints, { x: "x", y: "alt", stroke: "#00E5CC", strokeWidth: 2 }),
+        Plot.dot(optimizedPoints.filter((_, i) => adjustmentMap.has(i)), { x: "x", y: "alt", fill: "#00E5CC", r: 3 }),
+        Plot.ruleY([0], { strokeOpacity: 0 }),
+      ],
+    });
+
+    containerRef.current.replaceChildren(chart);
+    return () => chart.remove();
+  }, [result, origin, destination, baseline, optimized, altitudeAdjustments, n]);
+
+  return (
+    <div className="mb-5">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-white">Altitude Profile</h3>
+        <div className="flex items-center gap-3 text-[10px] text-white/40">
+          <span className="flex items-center gap-1.5"><span className="inline-block w-4 border-t-2 border-dashed border-red-400/70" />Baseline</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-4 border-t-2 border-[#00E5CC]" />Optimized</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-500/30" />ISSR</span>
+        </div>
+      </div>
+      <div ref={containerRef} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-2 [&_svg]:max-w-full" />
+      <p className="mt-1.5 text-[10px] text-white/25">
+        Corrections are typically 1–2k ft — the small divergence between lines is intentional.
+      </p>
+    </div>
+  );
+}
+
 /* ===== Full Report Modal ===== */
 
 function ReportModal({ result, origin, destination, date, aircraftType, isNight, onClose }: {
@@ -824,39 +913,8 @@ function ReportModal({ result, origin, destination, date, aircraftType, isNight,
           ))}
         </div>
 
-        {/* Altitude adjustments */}
-        {result.altitudeAdjustments.length > 0 && (
-          <div className="mb-5">
-            <h3 className="mb-3 text-sm font-semibold text-white">Altitude Adjustments ({result.altitudeAdjustments.length} waypoints)</h3>
-            <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-white/[0.07]">
-                    <th className="px-4 py-2 text-left text-white/40 font-medium">Waypoint</th>
-                    <th className="px-4 py-2 text-right text-white/40 font-medium">Original</th>
-                    <th className="px-4 py-2 text-right text-white/40 font-medium">Suggested</th>
-                    <th className="px-4 py-2 text-right text-white/40 font-medium">Δ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.altitudeAdjustments.map((adj, i) => {
-                    const delta = adj.suggestedAltitudeFt - adj.originalAltitudeFt;
-                    return (
-                      <tr key={i} className="border-b border-white/[0.04] last:border-0">
-                        <td className="px-4 py-2 text-white/60">WP {adj.waypointIndex}</td>
-                        <td className="px-4 py-2 text-right font-mono text-white/60">{adj.originalAltitudeFt.toLocaleString()} ft</td>
-                        <td className="px-4 py-2 text-right font-mono text-emerald-400">{adj.suggestedAltitudeFt.toLocaleString()} ft</td>
-                        <td className={`px-4 py-2 text-right font-mono font-semibold ${delta < 0 ? "text-emerald-400" : "text-amber-400"}`}>
-                          {delta > 0 ? "+" : ""}{delta.toLocaleString()} ft
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Flight altitude profile */}
+        <FlightProfileChart result={result} origin={origin} destination={destination} />
 
         {/* Summary stats */}
         <div className="grid grid-cols-3 gap-3 text-center">

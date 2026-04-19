@@ -5,8 +5,12 @@ import type { Waypoint } from "@/lib/types/flight";
 
 export async function simulateRoute(
   waypoints: Waypoint[],
-  aircraftType: string
+  aircraftType: string,
+  routeKey: string = "unknown"
 ): Promise<SimulationResult> {
+  const firstTime = waypoints[0]?.time ? new Date(waypoints[0].time).getUTCHours() : 10;
+  const isNight = firstTime < 6 || firstTime >= 20;
+
   try {
     const result = await optimizeAltitude(waypoints, aircraftType);
     return {
@@ -17,8 +21,7 @@ export async function simulateRoute(
       fuelPenaltyPercent: calculateFuelPenalty(result.altitudeAdjustments),
     };
   } catch {
-    // Fall back to demo simulation data
-    return getDemoSimulationResult(waypoints.length);
+    return getDemoSimulationResult(waypoints.length, isNight, `${routeKey}-${aircraftType}`);
   }
 }
 

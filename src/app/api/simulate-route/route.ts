@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       departureTime
     );
 
-    const result = await simulateRoute(waypoints, aircraftType);
+    const result = await simulateRoute(waypoints, aircraftType, `${origin}-${destination}`);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Simulate route error:", error);
