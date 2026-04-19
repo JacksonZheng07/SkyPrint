@@ -46,7 +46,12 @@ async function k2Chat(messages: K2ChatMessage[]): Promise<string> {
   }
 
   const data: K2ChatResponse = await res.json();
-  return data.choices[0]?.message?.content ?? "";
+  return stripReasoning(data.choices[0]?.message?.content ?? "");
+}
+
+function stripReasoning(content: string): string {
+  const closeIdx = content.lastIndexOf("</think>");
+  return (closeIdx >= 0 ? content.slice(closeIdx + "</think>".length) : content).trim();
 }
 
 /**

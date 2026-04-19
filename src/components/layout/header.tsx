@@ -50,12 +50,6 @@ export function Header() {
               </Link>
             );
           })}
-          <Link
-            href="/profile"
-            className="ml-3 inline-flex h-9 items-center justify-center rounded-md border border-white/40 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10"
-          >
-            Sign in
-          </Link>
         </nav>
       </div>
     </header>

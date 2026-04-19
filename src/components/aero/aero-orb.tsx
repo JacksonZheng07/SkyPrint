@@ -56,7 +56,7 @@ export function AeroOrb() {
           variants={orbVariants}
           animate={state.status}
         >
-          <div className="relative z-10 h-12 w-12 overflow-hidden rounded-full">
+          <div className="relative z-10 h-12 w-12 overflow-hidden rounded-full bg-slate-900">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/AeroImage.png" alt="Aero" className="h-full w-full scale-[1.95] translate-y-[4px] rounded-full object-cover" />
           </div>

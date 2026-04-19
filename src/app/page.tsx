@@ -25,28 +25,29 @@ export default function Home() {
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20">
           <div className="max-w-2xl space-y-5">
             <h1 className="text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl drop-shadow-lg">
-              Fly cleaner.
+              Contrails cause
               <br />
-              Leave lighter
+              <span className="text-emerald-400">57%</span> of aviation
               <br />
-              trails.
+              warming.
             </h1>
             <p className="max-w-lg text-lg text-white/80">
-              SkyPrint reveals the hidden climate impact of your
-              flight&mdash;<span className="text-emerald-400">contrails first</span>.
+              91% of airlines still ignore it. SkyPrint holds them accountable
+              with transparent scorecards and puts carbon intelligence directly
+              into your booking flow.
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/compare"
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-emerald-600 px-8 font-medium text-white shadow-lg transition-colors hover:bg-emerald-700"
               >
-                Compare Flights <span aria-hidden="true">&rarr;</span>
+                Book Flights <span aria-hidden="true">&rarr;</span>
               </Link>
               <Link
-                href="#how-it-works"
+                href="/playground"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-8 font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
               >
-                See How It Works
+                Playground
               </Link>
             </div>
 
@@ -56,19 +57,19 @@ export default function Home() {
                 <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Contrail-aware booking
+                Airline scorecards A&ndash;F
               </span>
               <span className="inline-flex items-center gap-2">
                 <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                 </svg>
-                Climate scoring
+                Carbon-aware booking
               </span>
               <span className="inline-flex items-center gap-2">
                 <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                 </svg>
-                Route simulation
+                Contrail simulation
               </span>
             </div>
           </div>
@@ -77,8 +78,8 @@ export default function Home() {
         {/* Aero intro bubble */}
         <div className="absolute bottom-24 right-8 z-10 hidden items-center gap-3 lg:flex">
           <div className="rounded-xl bg-slate-900/80 px-4 py-3 text-sm text-white backdrop-blur-sm">
-            <p className="font-medium">Hi, I&apos;m Aero.</p>
-            <p className="text-white/70">I&apos;ll help you make smarter, climate-conscious choices.</p>
+            <p className="font-medium">Meet Aero.</p>
+            <p className="text-white/70">Your AI guide to aviation&apos;s real climate impact.</p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/AeroImage.png" alt="Aero" className="h-14 w-14 rounded-full" />
@@ -101,14 +102,16 @@ export default function Home() {
         >
           <div className="mx-auto max-w-7xl">
             <motion.p variants={fadeUp} className="mb-2 text-sm font-semibold uppercase tracking-widest text-emerald-400">
-              From altitude to impact
+              The problem no one talks about
             </motion.p>
             <motion.h2 variants={fadeUp} className="max-w-lg text-3xl font-bold leading-snug text-white sm:text-4xl">
-              The hidden warming doesn&apos;t stay in the sky.
+              Aviation is 3.5% of global warming. Contrails are 57% of that.
             </motion.h2>
             <motion.p variants={fadeUp} className="mt-4 max-w-lg text-white/70">
-              Some flights leave behind contrails that trap heat far beyond the trip itself.
-              SkyPrint helps you see that hidden impact before you book.
+              The fix is known: slight altitude adjustments on less than 2% of flights
+              could eliminate the majority of contrail warming. The software exists.
+              Airlines aren&apos;t using it&mdash;because there&apos;s no consumer pressure
+              and no accountability. SkyPrint changes that.
             </motion.p>
             <motion.div variants={fadeUp}>
               <Link
@@ -135,7 +138,7 @@ export default function Home() {
         >
           <div className="mx-auto max-w-5xl">
             <motion.h2 variants={fadeUp} className="mb-14 text-center text-3xl font-bold text-white">
-              Why Contrails Matter More
+              Why Contrails Matter More Than CO₂
             </motion.h2>
             <motion.div variants={stagger} className="grid gap-6 md:grid-cols-3">
               <FeatureCard
@@ -144,9 +147,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
                   </svg>
                 }
-                title="Higher Impact"
-                description="Contrails can create warming effects that rival or exceed direct CO₂ on some routes."
-                stat="Up to 2x more warming"
+                title="Bigger Than CO₂"
+                description="Contrails trap heat that rivals or exceeds direct CO₂ emissions on many routes — yet 91% of airlines do nothing about it."
+                stat="Up to 57% of aviation warming"
               />
               <FeatureCard
                 icon={
@@ -155,9 +158,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 }
-                title="Weather Dependent"
-                description="Impact changes with altitude, humidity, and atmospheric conditions."
-                stat="Highly variable by conditions"
+                title="The Fix Exists"
+                description="Slight altitude adjustments on less than 2% of flights could eliminate the majority of contrail warming. The technology is ready."
+                stat="Less than 2% of flights need rerouting"
               />
               <FeatureCard
                 icon={
@@ -165,9 +168,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                   </svg>
                 }
-                title="Small Choice, Big Difference"
-                description="A different departure time or route can reduce warming significantly with little extra cost."
-                stat="Big impact from small changes"
+                title="No Accountability"
+                description="Airlines won't act without consumer pressure. SkyPrint scores every airline A through F and puts the data in your hands before you book."
+                stat="Transparent scorecards for 120+ airlines"
               />
             </motion.div>
           </div>
@@ -194,10 +197,10 @@ export default function Home() {
               How SkyPrint Works
             </motion.h2>
             <motion.div variants={stagger} className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
-              <StepCard step={1} title="Search flights" description="Find routes that fit your plans." icon="search" />
-              <StepCard step={2} title="Compare climate impact" description="See total climate score with contrails, CO₂, and more." icon="chart" />
-              <StepCard step={3} title="Let Aero explain" description="Get clear, personalized insights in seconds." icon="aero" />
-              <StepCard step={4} title="Book cleaner & track" description="Book with confidence. Photon tracks and updates your impact." icon="check" />
+              <StepCard step={1} title="Score airlines" description="Every airline graded A–F on emissions, contrail avoidance, and fuel efficiency." icon="chart" />
+              <StepCard step={2} title="Compare flights" description="See CO₂ delta, contrail risk, and climate score side-by-side before you book." icon="search" />
+              <StepCard step={3} title="Ask Aero" description="Our AI breaks down the data in plain language so you know exactly what you're choosing." icon="aero" />
+              <StepCard step={4} title="Simulate routes" description="Model contrail-optimized alternatives and see the cost-benefit breakdown." icon="check" />
             </motion.div>
           </div>
         </motion.div>
@@ -214,16 +217,17 @@ export default function Home() {
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
                 <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-emerald-400">
-                  See the better flight
+                  Carbon intelligence in your booking
                 </p>
                 <h2 className="text-3xl font-bold leading-snug text-white sm:text-4xl">
-                  Smarter choice.
+                  Same route.
                   <br />
-                  Clearer impact.
+                  Different impact.
                 </h2>
                 <p className="mt-4 text-white/60">
-                  We show you the full climate picture&mdash;contrails, CO₂, and more&mdash;so
-                  you can choose the flight that&apos;s better for you and the planet.
+                  For any two flights, see the CO₂ delta, contrail risk, airline
+                  scorecard grade, and price difference normalized against the
+                  real carbon cost. Not just a number&mdash;a story.
                 </p>
                 <Link
                   href="/compare"
@@ -234,29 +238,32 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                {/* Flight card 1 */}
-                <div className="flex-1 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-md">
+                {/* Flight card 1 — worse choice */}
+                <div className="flex-1 rounded-xl border border-red-500/30 bg-white/10 p-4 backdrop-blur-md">
+                  <span className="mb-2 inline-block rounded-full bg-red-500/20 px-3 py-0.5 text-[10px] font-semibold text-red-400">
+                    High Climate Impact
+                  </span>
                   <div className="flex items-center justify-between text-sm text-white">
                     <span className="font-medium">8:20 AM &mdash; 3:45 PM</span>
-                    <span className="text-white/60">LHR</span>
+                    <span className="text-white/60">JFK &rarr; LHR</span>
                   </div>
                   <p className="mt-1 text-xs text-white/50">Direct &middot; 7h 25m</p>
                   <div className="mt-3 flex items-center justify-between text-white">
-                    <span className="text-xs text-white/50">Airways X</span>
+                    <span className="text-xs text-white/50">Airways X &middot; Grade D</span>
                     <span className="font-semibold">$742</span>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/10 pt-3 text-center text-xs">
                     <div>
                       <p className="text-white/50">Climate Score</p>
-                      <p className="mt-1 font-bold text-amber-400">4.2</p>
+                      <p className="mt-1 text-lg font-bold text-red-400">2.1</p>
                     </div>
                     <div>
                       <p className="text-white/50">Contrail Risk</p>
-                      <p className="mt-1 font-bold text-red-400">High</p>
+                      <p className="mt-1 text-lg font-bold text-red-400">High</p>
                     </div>
                     <div>
                       <p className="text-white/50">CO₂</p>
-                      <p className="mt-1 font-bold text-white">612 kg</p>
+                      <p className="mt-1 text-lg font-bold text-red-300">847 kg</p>
                     </div>
                   </div>
                 </div>
@@ -268,26 +275,29 @@ export default function Home() {
                   </span>
                   <div className="flex items-center justify-between text-sm text-white">
                     <span className="font-medium">9:40 AM &mdash; 5:05 PM</span>
-                    <span className="text-white/60">LHR</span>
+                    <span className="text-white/60">JFK &rarr; LHR</span>
                   </div>
                   <p className="mt-1 text-xs text-white/50">Direct &middot; 7h 25m</p>
                   <div className="mt-3 flex items-center justify-between text-white">
-                    <span className="text-xs text-white/50">Airways X</span>
+                    <span className="text-xs text-white/50">Airways Y &middot; Grade A</span>
                     <span className="font-semibold">$765</span>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/10 pt-3 text-center text-xs">
                     <div>
                       <p className="text-white/50">Climate Score</p>
-                      <p className="mt-1 font-bold text-emerald-400">7.8</p>
+                      <p className="mt-1 text-lg font-bold text-emerald-400">8.9</p>
                     </div>
                     <div>
                       <p className="text-white/50">Contrail Risk</p>
-                      <p className="mt-1 font-bold text-emerald-400">Low</p>
+                      <p className="mt-1 text-lg font-bold text-emerald-400">Low</p>
                     </div>
                     <div>
                       <p className="text-white/50">CO₂</p>
-                      <p className="mt-1 font-bold text-white">523 kg</p>
+                      <p className="mt-1 text-lg font-bold text-emerald-300">312 kg</p>
                     </div>
+                  </div>
+                  <div className="mt-3 rounded-md bg-emerald-500/15 px-3 py-1.5 text-center text-xs font-medium text-emerald-400">
+                    Saves 535 kg CO₂ &mdash; equivalent to 24 trees per year
                   </div>
                 </div>
               </div>
@@ -317,9 +327,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                   </svg>
                 }
-                value="1.2M+"
-                label="Flights Analyzed"
-                sublabel="Across global routes"
+                value="57%"
+                label="Of Aviation Warming"
+                sublabel="Caused by contrails alone"
               />
               <StatCard
                 icon={
@@ -327,9 +337,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
                   </svg>
                 }
-                value="320K t"
-                label="CO₂ Avoided"
-                sublabel="Through better choices"
+                value="91%"
+                label="Airlines Ignoring It"
+                sublabel="No contrail avoidance programs"
               />
               <StatCard
                 icon={
@@ -337,9 +347,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                   </svg>
                 }
-                value="56K"
-                label="Users"
-                sublabel="Making an impact"
+                value="<2%"
+                label="Flights Need Rerouting"
+                sublabel="To eliminate most contrail warming"
               />
               <StatCard
                 icon={
@@ -347,9 +357,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                   </svg>
                 }
-                value="120+"
-                label="Airlines Scored"
-                sublabel="For climate transparency"
+                value="3.5%"
+                label="Of Global Warming"
+                sublabel="From aviation — and growing"
               />
             </motion.div>
           </div>
@@ -363,18 +373,25 @@ export default function Home() {
             variants={stagger}
           >
             <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white">
-              Every flight decision matters
+              The industry won&apos;t change itself
             </motion.h2>
             <motion.p variants={fadeUp} className="text-white/60">
-              Compare flights by total climate impact &mdash; not just carbon &mdash; and make
-              choices that reduce aviation&apos;s warming footprint.
+              Consumer pressure drives corporate action. SkyPrint gives you the
+              data to hold airlines accountable&mdash;and the tools to fly smarter
+              while you do it.
             </motion.p>
-            <motion.div variants={fadeUp}>
+            <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-4">
               <Link
                 href="/compare"
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-emerald-600 px-8 font-medium text-white shadow-lg transition-colors hover:bg-emerald-700"
               >
-                Start Comparing <span aria-hidden="true">&rarr;</span>
+                Book Flights <span aria-hidden="true">&rarr;</span>
+              </Link>
+              <Link
+                href="/airlines"
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+              >
+                View Airline Scorecards
               </Link>
             </motion.div>
           </motion.div>
